@@ -39,10 +39,13 @@ Shader.o: Shader.cpp Shader.h
 Mesh.o: Mesh.cpp Mesh.h
 objects/Cylinder.o: objects/Cylinder.cpp objects/Cylinder.h
 
+objects/*.cpp.o:
+	$(CXX) -c $(CFLG) $<
 
 
-$(EXE).a: Text.o Camera.o shapes.o Texture.o Shader.o Mesh.o Cylinder.o
-	ar -rcs $@ $^
+
+$(EXE).a: Camera.o shapes.o Texture.o Shader.o Mesh.o objects/Cylinder.o
+	ar -rcs project.a Camera.o shapes.o Texture.o Shader.o Mesh.o Cylinder.o
 
 # Compile rules
 .cpp.o:

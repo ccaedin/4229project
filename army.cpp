@@ -2,7 +2,7 @@
 //todo: why is grass so green?
 //todo: fix abbrupt change in color and lighting
 #include "lib.h"
-#include "Text.h"
+// #include "Text.h"
 #include "Camera.h"
 #include "Texture.h"
 #include <vector>
@@ -125,6 +125,7 @@ void cleanup()
 
     //free the textures
 }
+std::vector<glm::vec3> lightPositions(5);
 std::vector<Mesh*> houseMesh;
 Mesh *plane = nullptr;
 std::vector<std::vector<Mesh *>> houses(10);
@@ -142,7 +143,7 @@ int main(int argc, char *argv[])
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
     //set compatibility profile
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+    // SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
 
     // Turn on double buffering with a 24bit Z buffer
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
@@ -233,6 +234,8 @@ int main(int argc, char *argv[])
         // house color based on i
         houses[index++] = house(glm::vec3(-6, 0.0, i + 1), glm::vec3(0,0,0), brick_textures, 1.0f, roof_textures, shader);
         houses[index++] = house(glm::vec3(6, 0.0, i + 1), glm::vec3(0,180,0), brick_textures, 1.0, roof_textures, shader);
+        if(i < 0 && i > 5)
+        lightPositions[index] = glm::vec3(-6, 1, i + 1 - 0.5);
     }
 
     plane->setShader(shader);
@@ -332,7 +335,7 @@ static void draw_screen(float deltaTime)
         glDisable(GL_LIGHTING);
         glClearColor(0.53, 0.81, 0.98, 1);
     }
-    glClearColor(1,0,0, 1);
+    glClearColor(1.0,0,0, 1);
     glm::mat4 view = camera.GetViewMatrix();
     glm::mat4 projection = camera.GetProjectionMatrix();
     // glm::mat4 mvp = projection * view * model;
@@ -342,7 +345,12 @@ static void draw_screen(float deltaTime)
     //set the uniforms
     shader->setMat4("projection", projection);
     shader->setMat4("view", view);
-    shader->setVec3("lightPos", camera.GetPosition());
+    shader->setInt("numLights", 5);
+    // shader->setVec3("lightPos[0]", camera.GetPosition());
+    for(int i = 1; i<5; i++){
+        std::string name = "lightPos[" + std::to_string(i) + "]";
+        shader->setVec3(name, lightPositions[i]);
+    }
     shader->setFloat("lightPower", lightPower);
 
     // for(int i = 0; i < 10; i++)
@@ -370,16 +378,7 @@ static void draw_screen(float deltaTime)
     glUseProgram(0);
     glLoadIdentity();
     camera.Look();
-
-    // glBegin(GL_QUADS);
-    // glColor3f(1, 0, 0);
-    // glVertex3f(-2, -1, -2);
-    // glVertex3f(-2, -1, 2);
-    // glVertex3f(2, -1, 2);
-    // glVertex3f(2, -1, -2);
-    // glEnd();
-
-    glFlush();
+    // glFlush();
 }
 bool move_toggle = false;
 void handle_key_event(SDL_Event event)
@@ -417,9 +416,12 @@ void handle_key_event(SDL_Event event)
         switch (event.key.keysym.sym)
         {
         case SDLK_ESCAPE:
-            SDL_Log("Escape key pressed\n");
-            cleanup();
-            quit = true;
+            if(SDL_GetModState() & KMOD_CTRL){
+                SDL_Log("Escape key pressed\n");
+                cleanup();
+                quit = true;
+
+            }
             break;
         case SDLK_c:
             show_commands = !show_commands;
@@ -512,6 +514,7 @@ void handle_key_event(SDL_Event event)
             else
             {
                 lightPower -= 0.1;
+                lightPower = std::max(0.0f, lightPower);
             }
             break;
         case SDLK_y:

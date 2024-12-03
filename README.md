@@ -1,31 +1,19 @@
-# 4229hw4
+# 4229project
 
-For this project I use SDL2 and SDL2 TTL and glm
-The required files are arial.ttf, army.cpp, Text.cpp, Text.h
+For this project I use SDL2 and glm
 
 # Operation
 
 You move the view with the left click and the mouse and change the scale with the scroll wheel.
 Keybindings:
 c - show commands
-arrow-keys - move
-f - fullscreen
-esc - close window
-m - change perspective
-o - change object
-n - show normals
-p - pause time
-Capital P - pause soliders
-r/R - reset sun/moon
-a/A - ambient
-s/S -specular
-w/W - adjust the distance of the light
-d/D - diffuse
-k - toggle smooth/flat
-l - toggle lighting
-g - grab mouse
+WASD - Move
+l/L - dim/brighten light
 
 # Time Taken
-15 hours
+40 hours
 
-# 4229project
+# Remainder
+I still have to implement shadow casting but I have been stuck on lighting for a while because of how hard it is to debug shader code.
+
+The tutorial I referenced for the normal mapping included a way to turn the winding of vertices into tangents, so I adapted that code to fit different ways of constructing objects, from a simple case with a cube, to much harder with a cylinder and sphere.

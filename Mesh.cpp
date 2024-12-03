@@ -38,7 +38,7 @@ void Mesh::computeTangentBasis(
 
 
         float uvDeterminant = deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x;
-		float r = (uvDeterminant);
+		float r = 1/(uvDeterminant);
 		glm::vec3 tangent = (deltaPos1 * deltaUV2.y   - deltaPos2 * deltaUV1.y)*r;
 		glm::vec3 bitangent = (deltaPos2 * deltaUV1.x   - deltaPos1 * deltaUV2.x)*r;
 
