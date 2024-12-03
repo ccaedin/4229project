@@ -57,5 +57,6 @@ class Mesh {
         void loadMesh(std::string path);
         void setupMesh(std::vector<glm::vec3> vertices, std::vector<glm::vec2> uvs, std::vector<glm::vec3> normals);
         void setupMesh(std::vector<glm::vec3> vertices, std::vector<glm::vec2> uvs, std::vector<glm::vec3> normals, std::vector<glm::vec3> tangents, std::vector<glm::vec3> bitangents, std::vector<GLubyte> indices);
+        void setupDraw();
 };
 #endif // MESH_H

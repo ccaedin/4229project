@@ -1,7 +1,7 @@
 # Makefile
 
 CXX = g++
-C_FILES = Text.cpp Camera.cpp shapes.cpp Texture.cpp Shader.cpp Mesh.cpp Cylinder.cpp
+C_FILES = Text.cpp Camera.cpp shapes.cpp Texture.cpp Shader.cpp Mesh.cpp objects/Cylinder.cpp objects/Sphere.cpp
 MISC_FILES = Makefile README.md arial.ttf
 EXE = project
 #  Msys/MinGW
@@ -24,13 +24,14 @@ CFLG= -Wall -g
 LIBS=-lglut -lGLU -lGL -lm -lSDL2 -lSDL2_ttf -lSDL2_image -lGLEW
 endif
 #  OSX/Linux/Unix/Solaris
-CLEAN=rm -f $(EXE) *.o *.a
+CLEAN=rm -f $(EXE) *.o *.a objects/*.o
 endif
 
 all: $(EXE)
 # Dependencies
 # Dependencies
 army.o : army.cpp
+
 Text.o: Text.cpp Text.h
 Camera.o: Camera.cpp Camera.h
 shapes.o: shapes.cpp shapes.h
@@ -38,22 +39,25 @@ Texture.o: Texture.cpp Texture.h
 Shader.o: Shader.cpp Shader.h
 Mesh.o: Mesh.cpp Mesh.h
 objects/Cylinder.o: objects/Cylinder.cpp objects/Cylinder.h
-
-objects/*.cpp.o:
-	$(CXX) -c $(CFLG) $<
+objects/Sphere.o: objects/Sphere.cpp objects/Sphere.h
 
 
+objects/%.o: objects/%.cpp
+	$(CXX) -c $(CFLG) -o $@ $<
 
-$(EXE).a: Camera.o shapes.o Texture.o Shader.o Mesh.o objects/Cylinder.o
-	ar -rcs project.a Camera.o shapes.o Texture.o Shader.o Mesh.o Cylinder.o
+objects.a: objects/Cylinder.o objects/Sphere.o
+	ar -rcs $@ $^
+
+$(EXE): army.o Text.o Camera.o shapes.o Texture.o Shader.o Mesh.o objects.a
+	$(CXX) $(CFLG) -o $@ $^ $(LIBS)
+
+
+# $(EXE).a: Text.o Camera.o shapes.o Texture.o Shader.o Mesh.o objects/Cylinder.o objects/Sphere.o
+# 	ar -rcs $@ $^
 
 # Compile rules
 .cpp.o:
 	$(CXX) -c $(CFLG) $<
-
-# Link
-$(EXE): army.o $(EXE).a
-	$(CXX) $(CFLG) -o $@ $^ $(LIBS)
 
 # Clean
 clean:

@@ -3,11 +3,6 @@
 
 #pragma once
 #include "lib.h"
-
-struct Light {
-	glm::vec3 pos;
-	float power;
-};
 class Shader
 {
 public:
@@ -53,10 +48,6 @@ public:
     }
     void setMat4(const std::string& name, const glm::mat4& mat) const {
         glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
-    }
-    void setLight(const std::string& name, const Light& light) const {
-        GLuint lightID = glGetUniformLocation(ID, name.c_str());
-        
     }
     int getError() { return error; }
 

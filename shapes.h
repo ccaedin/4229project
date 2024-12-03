@@ -6,6 +6,7 @@
 #include "Texture.h"
 #include "Mesh.h"
 #include "objects/Cylinder.h"
+#include "objects/Sphere.h"
 #include "Shader.h"
 
 

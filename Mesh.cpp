@@ -38,7 +38,7 @@ void Mesh::computeTangentBasis(
 
 
         float uvDeterminant = deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x;
-		float r = 1/(uvDeterminant);
+		float r = (uvDeterminant);
 		glm::vec3 tangent = (deltaPos1 * deltaUV2.y   - deltaPos2 * deltaUV1.y)*r;
 		glm::vec3 bitangent = (deltaPos2 * deltaUV1.x   - deltaPos1 * deltaUV2.x)*r;
 
@@ -270,21 +270,9 @@ void Mesh::setupMesh(std::vector<glm::vec3> vertices, std::vector<glm::vec2> uvs
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBuffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLubyte), &indices[0], GL_STATIC_DRAW);
 }
-Mesh::Mesh(std::vector<glm::vec3> vertices, std::vector<glm::vec2> uvs, std::vector<glm::vec3> normals) {
-    model = glm::mat4(1.0f);
-    setupMesh(vertices, uvs, normals);
-}
-
-Mesh::Mesh(std::vector<glm::vec3> vertices, std::vector<glm::vec2> uvs, std::vector<glm::vec3> normals, std::vector<glm::vec3> tangents, std::vector<glm::vec3> bitangents, std::vector<GLubyte> indices) {
-    model = glm::mat4(1.0f);
-    setupMesh(vertices, uvs, normals, tangents, bitangents, indices);
-}
-
-void Mesh::draw()
+void Mesh::setupDraw()
 {
     shader->use();
-    // shader->setMat4("projection", projection);
-    // shader->setMat4("view", view);
     shader->setMat4("model", model);
 
     glActiveTexture(GL_TEXTURE0);
@@ -349,6 +337,21 @@ void Mesh::draw()
         0,                  // stride
         (void*)0            // array buffer offset
     );
+}
+Mesh::Mesh(std::vector<glm::vec3> vertices, std::vector<glm::vec2> uvs, std::vector<glm::vec3> normals)
+{
+    model = glm::mat4(1.0f);
+    setupMesh(vertices, uvs, normals);
+}
+
+Mesh::Mesh(std::vector<glm::vec3> vertices, std::vector<glm::vec2> uvs, std::vector<glm::vec3> normals, std::vector<glm::vec3> tangents, std::vector<glm::vec3> bitangents, std::vector<GLubyte> indices) {
+    model = glm::mat4(1.0f);
+    setupMesh(vertices, uvs, normals, tangents, bitangents, indices);
+}
+
+void Mesh::draw()
+{
+    setupDraw();
     glDrawArrays(GL_TRIANGLES, 0, vertices.size());
     
 

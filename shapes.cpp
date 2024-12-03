@@ -312,18 +312,42 @@ std::vector<Mesh*> house(glm::vec3 pos, glm::vec3 rot, Texture *house_text[], fl
     float torchLength = 0.5;
     int torchAngle = -35;
     float torchPos = 0.7;
-    float torchHeight = 0.5;
+    float torchHeight = 0.4;
+    float torchBallRadius = 0.1;
     Mesh* torch1 = cylinder(torchLength, 0.03, roof_text[0], shader);
     torch1->setModel(model);
     torch1->translate(glm::vec3(1, torchHeight, -torchPos));
     torch1->rotate(torchAngle, glm::vec3(0, 0, 1));
     meshes.push_back(torch1);
 
+    //torch ball 1
+    Sphere *torchBall1 = new Sphere(torchBallRadius, 10, 10);
+    torchBall1->setModel(torch1->getModel());
+    //based on the angle of the torch and the length, but the ball at the end of the torch
+    torchBall1->translate(glm::vec3(0, torchLength, 0));
+
+    torchBall1->setColorTexture(roof_text[0]);
+    torchBall1->setNormalTexture(roof_text[1]);
+    torchBall1->setShader(shader);
+    meshes.push_back(torchBall1);
+
+
     Mesh* torch2 = cylinder(torchLength, 0.03, roof_text[0], shader);
     torch2->setModel(model);
     torch2->translate(glm::vec3(1, torchHeight, torchPos));
     torch2->rotate(torchAngle, glm::vec3(0, 0, 1));
     meshes.push_back(torch2);
+
+    //torch ball 2
+    Sphere *torchBall2 = new Sphere(torchBallRadius, 10, 10);
+    torchBall2->setModel(torch2->getModel());
+    //based on the angle of the torch and the length, but the ball at the end of the torch
+    torchBall2->translate(glm::vec3(0, torchLength, 0));
+    
+    torchBall2->setColorTexture(roof_text[0]);
+    torchBall2->setNormalTexture(roof_text[1]);
+    torchBall2->setShader(shader);
+    meshes.push_back(torchBall2);
 
     return meshes;
 }

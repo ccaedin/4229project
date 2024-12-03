@@ -210,71 +210,7 @@ void Cylinder::computeTangentBasis(
     }
 }
 void Cylinder::draw() {
-    shader->use();
-    shader->setMat4("model", model);
-
-    glActiveTexture(GL_TEXTURE0);
-    colorTexture->bind();
-    shader->setInt("colorTexture", 0);
-
-    glActiveTexture(GL_TEXTURE1);
-    normalTexture->bind();
-    shader->setInt("normalTexture", 1);
-
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glVertexAttribPointer(
-        0,                  // attribute
-        3,                  // size
-        GL_FLOAT,           // type
-        GL_FALSE,           // normalized?
-        0,                  // stride
-        (void*)0            // array buffer offset
-    );
-
-    glEnableVertexAttribArray(1);
-    glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
-    glVertexAttribPointer(
-        1,                  // attribute
-        2,                  // size
-        GL_FLOAT,           // type
-        GL_FALSE,           // normalized?
-        0,                  // stride
-        (void*)0            // array buffer offset
-    );
-
-    glEnableVertexAttribArray(2);
-    glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
-    glVertexAttribPointer(
-        2,                  // attribute
-        3,                  // size
-        GL_FLOAT,           // type
-        GL_FALSE,           // normalized?
-        0,                  // stride
-        (void*)0            // array buffer offset
-    );
-
-    glEnableVertexAttribArray(3);
-    glBindBuffer(GL_ARRAY_BUFFER, tangentBuffer);
-    glVertexAttribPointer(
-        3,                  // attribute
-        3,                  // size
-        GL_FLOAT,           // type
-        GL_FALSE,           // normalized?
-        0,                  // stride
-        (void*)0            // array buffer offset
-    );
-
-    glEnableVertexAttribArray(4);
-    glBindBuffer(GL_ARRAY_BUFFER, bitangentBuffer);
-    glVertexAttribPointer(
-        4,                  // attribute
-        3,                  // size
-        GL_FLOAT,           // type
-        GL_FALSE,           // normalized?
-        0,                  // stride
-        (void*)0            // array buffer offset
-    );
+    setupDraw();
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, numSideVertices);
 
