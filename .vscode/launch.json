@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "preLaunchTask": "make",
-            "program": "${workspaceFolder}/project",
+            "program": "${workspaceFolder}/final",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

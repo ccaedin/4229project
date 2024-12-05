@@ -11,6 +11,8 @@
 #include "shapes.h"
 #include "objects/Cylinder.h"
 #include "objects/Sphere.h"
+#include "objects/Skybox.h"
+#include "objects/House.h"
 
 // settings
 static void draw_screen(float deltaTime);
@@ -116,6 +118,8 @@ Texture *brick_normal = nullptr;
 
 Texture *roof = nullptr;
 Texture *roof_normal = nullptr;
+
+Texture *fire_texture = nullptr;
 void cleanup()
 {
 
@@ -126,11 +130,13 @@ void cleanup()
 
     //free the textures
 }
+std::vector<glm::vec3> lightPositions;
 std::vector<Mesh*> houseMesh;
 Mesh *plane = nullptr;
 std::vector<std::vector<Mesh *>> houses(10);
 Cylinder* cylinderMesh = nullptr;
 Sphere* sphereMesh = nullptr;
+Skybox* skybox = nullptr;
 float lightPower = 1.0;
 int main(int argc, char *argv[])
 {
@@ -204,6 +210,9 @@ int main(int argc, char *argv[])
         glm::vec3(0, 1, 0),
         glm::vec3(0, 1, 0),
     };
+
+    skybox = new Skybox(&camera);
+
     plane = new Mesh(plane_vertices, plane_uvs, plane_normals);
 
     grass = new Texture("./textures/grass/color.png");
@@ -217,7 +226,7 @@ int main(int argc, char *argv[])
     roof = new Texture("./textures/roof/color.jpg");
     roof_normal = new Texture("./textures/roof/normal.png");
 
-
+    fire_texture = new Texture("./textures/fire/color.jpg");
     shader = new Shader("./shaders/basic.vert", "./shaders/basic.frag");
     if(shader->getError() != 0)
     {
@@ -228,14 +237,20 @@ int main(int argc, char *argv[])
     Texture *brick_textures[] = {brick, brick_normal};
     Texture *roof_textures[] = {roof, roof_normal};
 
-    houseMesh = house(glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), brick_textures, 2, roof_textures, shader);
+    // houseMesh = house(glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), brick_textures, 2, roof_textures, shader, lightPositions);
+    std::vector<glm::vec3> lightPositionsTemp;
     int index = 0;
     for (int i = -10; i < 10; i += 4)
     {
         // house color based on i
-        houses[index++] = house(glm::vec3(-6, 0.0, i + 1), glm::vec3(0,0,0), brick_textures, 1.0f, roof_textures, shader);
-        houses[index++] = house(glm::vec3(6, 0.0, i + 1), glm::vec3(0,180,0), brick_textures, 1.0, roof_textures, shader);
+        houses[index++] = house(glm::vec3(-6, 0.0, i + 1), glm::vec3(0,0,0), brick_textures, 1.0f, roof_textures, fire_texture, shader, lightPositions);
+        lightPositionsTemp.push_back(glm::vec3(-6, 0.0, i + 1));
+        // lightPositions.push_back(glm::vec3(-6, 0.0, i + 1));
+        houses[index++] = house(glm::vec3(6, 0.0, i + 1), glm::vec3(0,180,0), brick_textures, 1.0, roof_textures, fire_texture, shader, lightPositions);
+        lightPositionsTemp.push_back(glm::vec3(6, 0.0, i + 1));
     }
+    // lightPositions = lightPositionsTemp;
+    //check how many duploicate lights we have
 
     plane->setShader(shader);
     plane->setColorTexture(grass);
@@ -326,22 +341,28 @@ int main(int argc, char *argv[])
 
 float time_day = 0;
 float time_speed = 0.1;
+float accumulated_time = 0;
+bool flashLightEnabled = false;
+float getFlicker() {
+    return (rand() % 100) / 500.0;
+}
+float flicker = getFlicker();
 static void draw_screen(float deltaTime)
 {
+    accumulated_time += deltaTime;
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     if(lighting)
     {
         // }
-        glEnable(GL_LIGHTING);
-
+        glClearColor(0.53, 0.81, 0.98, 1);
+        lightPower = 1.0;
         // glm::vec4 Position(distance * Cos(time_day), distance * Sin(time_day), 0, 1);
      }
     else
     {
-        glDisable(GL_LIGHTING);
-        glClearColor(0.53, 0.81, 0.98, 1);
+        glClearColor(0,0,0, 1);
+        lightPower = 1;
     }
-    glClearColor(1,0,0, 1);
     glm::mat4 view = camera.GetViewMatrix();
     glm::mat4 projection = camera.GetProjectionMatrix();
     // glm::mat4 mvp = projection * view * model;
@@ -351,11 +372,58 @@ static void draw_screen(float deltaTime)
     //set the uniforms
     shader->setMat4("projection", projection);
     shader->setMat4("view", view);
-    shader->setVec3("lightPos", camera.GetPosition());
-    shader->setFloat("lightPower", lightPower);
+    int numLights = 20;
+    shader->setInt("numLights", numLights);
+    lightPositions[0] = camera.GetPosition();
+    //set light power randomly so it appears to flicker
+    if(accumulated_time > 700)
+    {
+        flicker = getFlicker();
+        accumulated_time = 0;
+    }
+    for(int i = 0; i<numLights; i++){
+        std::string lightName = "lights[" + std::to_string(i+1) + "]";
+        shader->setVec3(lightName + ".pos", lightPositions[i]);
+        // shader->setFloat(lightName + ".power", 5.0);
+        // shader->setVec4(lightName + ".color", glm::vec4(1, 1, 1, 1));
+        if(accumulated_time > 700)
+        {
+            flicker = getFlicker();
+        }
+        shader->setFloat(lightName+".power", 0.7 + flicker);
+            //set the color between orange and red like a torch
+        shader->setVec4(lightName+".color", glm::vec4(1, 0.1, 0, 1));
+    }
+    if(accumulated_time > 700)
+    {
+        flicker = getFlicker();
+        accumulated_time = 0;
+    }
+//     struct FlashLight {
+//     vec3 position;  
+//     vec3 direction;
+//     float cutOff;
+//     float outerCutOff;
+  
+//     vec3 ambient;
+//     vec3 diffuse;
+//     vec3 specular;
+	
+//     float constant;
+//     float linear;
+//     float quadratic;
+// };
+    shader->setBool("flashLightEnabled", flashLightEnabled);
+    shader->setVec3("flashLight.light.pos", camera.GetPosition());
+    shader->setVec4("flashLight.light.color", glm::vec4(1, 1, 1, 1));
+    // shader->setVec3("flashLight.ambient", glm::vec3(0.1, 0.1, 0.1));
+    // shader->setVec3("flashLight.diffuse", glm::vec3(0.8, 0.8, 0.8));
+    // shader->setVec3("flashLight.specular", glm::vec3(1, 1, 1));
+    shader->setFloat("flashLight.light.power", lightPower);
+    shader->setVec3("flashLight.dir", camera.GetDirection());
+    shader->setFloat("flashLight.cutOff", cos(glm::radians(12.5f)));
 
-
-    // plane->draw();
+    plane->draw();
     // for(auto house : houseMesh)
     // {
     //     house->draw();
@@ -368,11 +436,13 @@ static void draw_screen(float deltaTime)
             mesh->draw();
         }
     }
+    skybox->getShader()->use();
+    skybox->getShader()->setMat4("projection", projection);
+    skybox->getShader()->setMat4("view", view);
+    skybox->draw();
 
-
-
-    cylinderMesh->draw();
-    sphereMesh->draw();
+    // cylinderMesh->draw();
+    // sphereMesh->draw();
     glUseProgram(0);
     glLoadIdentity();
     camera.Look();
@@ -430,7 +500,7 @@ void handle_key_event(SDL_Event event)
         case SDLK_c:
             show_commands = !show_commands;
             break;
-        case SDLK_f:
+        case SDLK_F11:
             is_fullscreen = !is_fullscreen;
             SDL_SetWindowFullscreen(Window, is_fullscreen ? SDL_WINDOW_FULLSCREEN : 0);
             break;
@@ -519,6 +589,9 @@ void handle_key_event(SDL_Event event)
             {
                 lightPower -= 0.1;
             }
+            break;
+        case SDLK_f:
+            flashLightEnabled = !flashLightEnabled;
             break;
         case SDLK_y:
             texture = !texture;

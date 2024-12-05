@@ -1,9 +1,9 @@
 # Makefile
 
 CXX = g++
-C_FILES = Text.cpp Camera.cpp shapes.cpp Texture.cpp Shader.cpp Mesh.cpp objects/Cylinder.cpp objects/Sphere.cpp
+C_FILES = *.cpp objects/*.cpp
 MISC_FILES = Makefile README.md arial.ttf
-EXE = project
+EXE = final
 #  Msys/MinGW
 ifeq "$(OS)" "Windows_NT"
 CFLG=-O3 -Wall -DUSEGLEW
@@ -40,12 +40,15 @@ Shader.o: Shader.cpp Shader.h
 Mesh.o: Mesh.cpp Mesh.h
 objects/Cylinder.o: objects/Cylinder.cpp objects/Cylinder.h
 objects/Sphere.o: objects/Sphere.cpp objects/Sphere.h
+objects/Cube.o: objects/Cube.cpp objects/Cube.h
+objects/Skybox.o: objects/Skybox.cpp objects/Skybox.h
+objects/House.o: objects/House.cpp objects/House.h
 
 
 objects/%.o: objects/%.cpp
 	$(CXX) -c $(CFLG) -o $@ $<
 
-objects.a: objects/Cylinder.o objects/Sphere.o
+objects.a: objects/Cylinder.o objects/Sphere.o objects/Cube.o objects/Skybox.o objects/House.o
 	ar -rcs $@ $^
 
 $(EXE): army.o Text.o Camera.o shapes.o Texture.o Shader.o Mesh.o objects.a
@@ -64,4 +67,4 @@ clean:
 	$(CLEAN)
 
 zip:
-	zip -r $(EXE).zip army.cpp $(C_FILES) objects/*.h Text.h Mesh.h Shader.h Camera.h lib.h shapes.h Texture.h $(MISC_FILES) textures/
+	zip -r $(EXE).zip army.cpp $(C_FILES) objects/*.h *.h $(MISC_FILES) textures/ shaders/

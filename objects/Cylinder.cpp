@@ -130,9 +130,10 @@ void Cylinder::computeTangentBasis(
 		float r = (uvDeterminant);
 		glm::vec3 tangent = (deltaPos1 * deltaUV2.y   - deltaPos2 * deltaUV1.y)*r;
 		glm::vec3 bitangent = (deltaPos2 * deltaUV1.x   - deltaPos1 * deltaUV2.x)*r;
-
-        std::cout << "Tangent: " << tangent.x << " " << tangent.y << " " << tangent.z << std::endl;
-		// Set the same tangent for all three vertices of the triangle.
+        #ifdef DEBUG
+        std::cout << "Cylinder Tangent: " << tangent.x << " " << tangent.y << " " << tangent.z << std::endl;
+		#endif
+        // Set the same tangent for all three vertices of the triangle.
 		tangents.push_back(tangent);
 		tangents.push_back(tangent);
 		tangents.push_back(tangent);

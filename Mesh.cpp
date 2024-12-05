@@ -5,7 +5,7 @@ Mesh::Mesh(std::string path)
     model = glm::mat4(1.0f);
     loadMesh(path);
 }
-
+//https://learnopengl.com/Advanced-Lighting/Normal-Mapping
 void Mesh::computeTangentBasis(
 	// inputs
 	std::vector<glm::vec3> & vertices,
@@ -38,11 +38,12 @@ void Mesh::computeTangentBasis(
 
 
         float uvDeterminant = deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x;
-		float r = (uvDeterminant);
+		float r = 1.0f/(uvDeterminant);
 		glm::vec3 tangent = (deltaPos1 * deltaUV2.y   - deltaPos2 * deltaUV1.y)*r;
 		glm::vec3 bitangent = (deltaPos2 * deltaUV1.x   - deltaPos1 * deltaUV2.x)*r;
-
+        #ifdef DEBUG
         std::cout << "Tangent: " << tangent.x << " " << tangent.y << " " << tangent.z << std::endl;
+        #endif
 		// Set the same tangent for all three vertices of the triangle.
 		tangents.push_back(tangent);
 		tangents.push_back(tangent);
@@ -351,6 +352,7 @@ Mesh::Mesh(std::vector<glm::vec3> vertices, std::vector<glm::vec2> uvs, std::vec
 
 void Mesh::draw()
 {
+    //how to call the Skybox setup function from here
     setupDraw();
     glDrawArrays(GL_TRIANGLES, 0, vertices.size());
     
