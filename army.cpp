@@ -13,6 +13,7 @@
 #include "objects/Sphere.h"
 #include "objects/Skybox.h"
 #include "objects/House.h"
+#include "objects/Tree.h"
 
 // settings
 static void draw_screen(float deltaTime);
@@ -130,10 +131,11 @@ void cleanup()
 
     //free the textures
 }
-std::vector<glm::vec3> lightPositions;
+// std::vector<glm::vec3> lightPositions;
 std::vector<Mesh*> houseMesh;
 Mesh *plane = nullptr;
-std::vector<std::vector<Mesh *>> houses(10);
+std::vector<House*> houses(10);
+std::vector<Tree*> trees;
 Cylinder* cylinderMesh = nullptr;
 Sphere* sphereMesh = nullptr;
 Skybox* skybox = nullptr;
@@ -233,9 +235,12 @@ int main(int argc, char *argv[])
         SDL_Log("Error: %d\n", shader->getError());
         return 1;
     }
-
     Texture *brick_textures[] = {brick, brick_normal};
     Texture *roof_textures[] = {roof, roof_normal};
+    TextureGroup* brick_texture_group = new TextureGroup(brick_textures[0], brick_textures[1]);
+    TextureGroup* roof_texture_group = new TextureGroup(roof_textures[0], roof_textures[1]);
+    TextureGroup* fire_texture_group = new TextureGroup(fire_texture, fire_texture);
+    TextureGroup* torch_texture_group = new TextureGroup(std::vector<std::string>{"./textures/wood/color.jpg", "./textures/wood/normal.png"});
 
     // houseMesh = house(glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), brick_textures, 2, roof_textures, shader, lightPositions);
     std::vector<glm::vec3> lightPositionsTemp;
@@ -243,12 +248,16 @@ int main(int argc, char *argv[])
     for (int i = -10; i < 10; i += 4)
     {
         // house color based on i
-        houses[index++] = house(glm::vec3(-6, 0.0, i + 1), glm::vec3(0,0,0), brick_textures, 1.0f, roof_textures, fire_texture, shader, lightPositions);
+        // houses[index++] = house(glm::vec3(-6, 0.0, i + 1), glm::vec3(0,0,0), brick_textures, 1.0f, roof_textures, fire_texture, shader, lightPositions);
+        houses[index++] = new House(glm::vec3(-6, 0.0, i + 1), glm::vec3(1,1,1), glm::vec3(0, 0, 0), brick_texture_group, roof_texture_group, torch_texture_group, fire_texture_group, shader);
         lightPositionsTemp.push_back(glm::vec3(-6, 0.0, i + 1));
         // lightPositions.push_back(glm::vec3(-6, 0.0, i + 1));
-        houses[index++] = house(glm::vec3(6, 0.0, i + 1), glm::vec3(0,180,0), brick_textures, 1.0, roof_textures, fire_texture, shader, lightPositions);
+        houses[index++] = new House(glm::vec3(6, 0.0, i + 1), glm::vec3(1,1,1), glm::vec3(0, 180, 0), brick_texture_group, roof_texture_group, torch_texture_group, fire_texture_group, shader);
         lightPositionsTemp.push_back(glm::vec3(6, 0.0, i + 1));
     }
+
+
+
     // lightPositions = lightPositionsTemp;
     //check how many duploicate lights we have
 
@@ -258,17 +267,26 @@ int main(int argc, char *argv[])
     plane->translate(glm::vec3(0, -1, 0));
     plane->scale(glm::vec3(10, 1, 10));
 
-    cylinderMesh = new Cylinder(.5, 0.03);
-    cylinderMesh->setShader(shader);
-    cylinderMesh->setColorTexture(brick);
-    cylinderMesh->setNormalTexture(brick_normal);
-    cylinderMesh->translate(glm::vec3(0, 0, 0));
 
-    sphereMesh = new Sphere(0.5, 20, 20);
-    sphereMesh->setShader(shader);
-    sphereMesh->setColorTexture(brick);
-    sphereMesh->setNormalTexture(brick_normal);
-    sphereMesh->translate(glm::vec3(0, 2, 0));
+    TextureGroup* wood_texture_group = new TextureGroup(std::vector<std::string>{"./textures/wood/color.jpg", "./textures/wood/normal.png"});
+    TextureGroup* leaves_texture_group = new TextureGroup(std::vector<std::string>{"./textures/leaves/color.jpg", "./textures/leaves/normal.png"});
+    //setup the trees
+    for(int i = -10; i < 10; i+=4)
+    {
+        trees.push_back(new Tree(glm::vec3(-9.5, 0.0, i + 1), 1, 0.1, wood_texture_group, leaves_texture_group, shader));
+        trees.push_back(new Tree(glm::vec3(9.5, 0.0, i + 1), 1, 0.1, wood_texture_group, leaves_texture_group, shader));
+    }
+    // cylinderMesh = new Cylinder(.5, 0.03);
+    // cylinderMesh->setShader(shader);
+    // cylinderMesh->setColorTexture(brick);
+    // cylinderMesh->setNormalTexture(brick_normal);
+    // cylinderMesh->translate(glm::vec3(0, 0, 0));
+
+    // sphereMesh = new Sphere(0.5, 20, 20);
+    // sphereMesh->setShader(shader);
+    // sphereMesh->setColorTexture(brick);
+    // sphereMesh->setNormalTexture(brick_normal);
+    // sphereMesh->translate(glm::vec3(0, 2, 0));
 
 
     // ennable depth testing
@@ -343,8 +361,10 @@ float time_day = 0;
 float time_speed = 0.1;
 float accumulated_time = 0;
 bool flashLightEnabled = false;
+float flickerAlpha = 0.1;
+float lastFlicker = 0;
 float getFlicker() {
-    return (rand() % 100) / 500.0;
+    return (rand() % 100 / 50.0) * flickerAlpha + (1 - flickerAlpha)*lastFlicker;
 }
 float flicker = getFlicker();
 static void draw_screen(float deltaTime)
@@ -374,45 +394,31 @@ static void draw_screen(float deltaTime)
     shader->setMat4("view", view);
     int numLights = 20;
     shader->setInt("numLights", numLights);
-    lightPositions[0] = camera.GetPosition();
+    // lightPositions[0] = camera.GetPosition();
     //set light power randomly so it appears to flicker
-    if(accumulated_time > 700)
+
+    //get light positions
+    std::vector<glm::vec3> lightPositions;
+    for(auto house : houses)
     {
-        flicker = getFlicker();
-        accumulated_time = 0;
+        auto houseLightPositions = house->getLights();
+        for(size_t i = 0; i<houseLightPositions.size(); i++)
+        {
+            lightPositions.push_back(houseLightPositions[i]);
+        }
     }
+
     for(int i = 0; i<numLights; i++){
         std::string lightName = "lights[" + std::to_string(i+1) + "]";
         shader->setVec3(lightName + ".pos", lightPositions[i]);
         // shader->setFloat(lightName + ".power", 5.0);
         // shader->setVec4(lightName + ".color", glm::vec4(1, 1, 1, 1));
-        if(accumulated_time > 700)
-        {
-            flicker = getFlicker();
-        }
+        lastFlicker = flicker;
+        flicker = getFlicker();
         shader->setFloat(lightName+".power", 0.7 + flicker);
             //set the color between orange and red like a torch
         shader->setVec4(lightName+".color", glm::vec4(1, 0.1, 0, 1));
     }
-    if(accumulated_time > 700)
-    {
-        flicker = getFlicker();
-        accumulated_time = 0;
-    }
-//     struct FlashLight {
-//     vec3 position;  
-//     vec3 direction;
-//     float cutOff;
-//     float outerCutOff;
-  
-//     vec3 ambient;
-//     vec3 diffuse;
-//     vec3 specular;
-	
-//     float constant;
-//     float linear;
-//     float quadratic;
-// };
     shader->setBool("flashLightEnabled", flashLightEnabled);
     shader->setVec3("flashLight.light.pos", camera.GetPosition());
     shader->setVec4("flashLight.light.color", glm::vec4(1, 1, 1, 1));
@@ -431,11 +437,14 @@ static void draw_screen(float deltaTime)
 
     for(auto house : houses)
     {
-        for(auto mesh : house)
-        {
-            mesh->draw();
-        }
+        house->draw();
     }
+
+    for(auto tree : trees)
+    {
+        tree->draw();
+    }
+
     skybox->getShader()->use();
     skybox->getShader()->setMat4("projection", projection);
     skybox->getShader()->setMat4("view", view);

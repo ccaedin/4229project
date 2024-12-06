@@ -1,9 +1,8 @@
 #ifndef MESH_H
 #define MESH_H
 
-#pragma once
 #include "lib.h"
-#include "Texture.h"
+#include "Texture.h" // Ensure that Texture.h is correctly included
 #include "Shader.h"
 class Mesh {
     public:
@@ -23,6 +22,7 @@ class Mesh {
         void resetModel() { model = glm::mat4(1.0f); }
         glm::mat4 getModel() { return model; }
 
+        void setTextureGroup(TextureGroup *textureGroup);
         void setColorTexture(Texture *texture) { colorTexture = texture; }
         void setNormalTexture(Texture *texture) { normalTexture = texture; }
         void setModel(glm::mat4 model) { this->model = model; }

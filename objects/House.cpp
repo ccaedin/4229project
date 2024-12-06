@@ -1,21 +1,10 @@
 #include "House.h"
 
-House::House(glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, Shader *shader) : Cube()
+House::House(glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, TextureGroup *brickTexture, TextureGroup *roofTexture, TextureGroup *torchTexture, TextureGroup *fireTexture, Shader *shader)
 {
-    //setup the textures
     this->shader = shader;
 
-    brickColor = new Texture("./textures/brick/color.jpg");
-    brickNormal = new Texture("./textures/brick/normal.png");
-
-    roofColor = new Texture("./textures/roof/color.jpg");
-    roofNormal = new Texture("./textures/roof/normal.png");
-
-    torchColor = new Texture("./textures/wood/color.jpg");
-    torchNormal = new Texture("./textures/wood/normal.png");
-
-    setColorTexture(brickColor);
-    setNormalTexture(brickNormal);
+    setTextureGroup(brickTexture);   
 
 
     translate(pos);
@@ -77,18 +66,24 @@ House::House(glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, Shader *shader) : Cu
     roof->rotate(rot.y, glm::vec3(0, 1, 0));
     roof->rotate(rot.x, glm::vec3(1, 0, 0));
     roof->scale(glm::vec3(1.2, 1.2, 1.2));
-    roof->setColorTexture(roofColor);
-    roof->setNormalTexture(roofNormal);
-    roof->setShader(shader);
+    
 
+
+    roof->setShader(shader);
+    roof->setTextureGroup(roofTexture);
+
+
+
+    //for now
+    fireTexture = torchTexture;
     float torchLength = 0.5;
     int torchAngle = -35;
     float torchPos = 0.7;
     float torchHeight = 0.4;
     float torchBallRadius = 0.1;
     torch1 = new Cylinder(torchLength, 0.03);
-    torch1->setColorTexture(torchColor);
-    torch1->setNormalTexture(torchNormal);
+    
+    torch1->setTextureGroup(torchTexture);
     torch1->setShader(shader);
 
     torch1->setModel(model);
@@ -101,8 +96,7 @@ House::House(glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, Shader *shader) : Cu
     //based on the angle of the torch and the length, but the ball at the end of the torch
     torch1Fire->translate(glm::vec3(0, torchLength, 0));
 
-    torch1Fire->setColorTexture(torchColor);
-    torch1Fire->setNormalTexture(torchNormal);
+    torch1Fire->setTextureGroup(torchTexture);
     torch1Fire->setShader(shader);
 
     glm::vec3 torch1FirePos = glm::vec3(torch1Fire->getModel() * glm::vec4(1, 1, 1, 1));
@@ -110,8 +104,8 @@ House::House(glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, Shader *shader) : Cu
 
 
     torch2 = new Cylinder(torchLength, 0.03);
-    torch2->setColorTexture(torchColor);
-    torch2->setNormalTexture(torchNormal);
+    
+    torch2->setTextureGroup(torchTexture);
     torch2->setShader(shader);
 
     torch2->setModel(model);
@@ -120,10 +114,9 @@ House::House(glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, Shader *shader) : Cu
 
     //torch ball 2
     torch2Fire = new Sphere(torchBallRadius, 10, 10);
-    torch2Fire->setColorTexture(torchColor);
-    torch2Fire->setNormalTexture(torchNormal);
+    torch2Fire->setTextureGroup(fireTexture);
     torch2Fire->setShader(shader);
-    
+
 
     torch2Fire->setModel(torch2->getModel());
     //based on the angle of the torch and the length, but the ball at the end of the torch
@@ -131,7 +124,6 @@ House::House(glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, Shader *shader) : Cu
     //geth the position of the torch from the model matrix
     glm::vec3 torch2FirePos = glm::vec3(torch2Fire->getModel() * glm::vec4(1, 1, 1, 1));
     lightPositions.push_back(torch2FirePos);
-
 }
 
 void House::draw()

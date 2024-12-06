@@ -60,3 +60,35 @@ void Texture::loadTexture()
 
     SDL_FreeSurface(surface);
 }
+
+TextureGroup::TextureGroup(std::vector<std::string> filePaths)
+{
+    //if file is named color it is a diffuse texture
+    //if file is named normal it is a normal texture
+    for (std::string filePath : filePaths)
+    {
+        if (filePath.find("color") != std::string::npos)
+        {
+            Texture *texture = new Texture(filePath);
+            textureMap[DIFFUSE] = texture;
+        }
+        else if (filePath.find("normal") != std::string::npos)
+        {
+            Texture *texture = new Texture(filePath);
+            textureMap[NORMAL] = texture;
+        }
+        // else if (filePath.find("specular") != std::string::npos)
+        // {
+        //     Texture *texture = new Texture(filePath);
+        //     textureMap[SPECULAR];
+        // }
+    }
+
+
+}
+
+TextureGroup::TextureGroup(Texture *diffuse, Texture *normal)
+{
+    textureMap[DIFFUSE] = diffuse;
+    textureMap[NORMAL] = normal;
+}

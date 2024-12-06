@@ -131,116 +131,116 @@ Mesh* cube(glm::vec3 pos, glm::vec3 rot, Texture **texture, float rep, Shader* s
     return cube;
 }
 
-std::vector<Mesh*> house(glm::vec3 pos, glm::vec3 rot, Texture *house_text[], float house_reps, Texture *roof_text[], Texture* fire, Shader *shader, std::vector<glm::vec3> &lightPositions)
-{
-    std::vector<Mesh*> meshes;
-    Mesh* base = cube(pos, rot, house_text, house_reps, shader);
-    // base->setShader(shader);
-    std::vector<glm::vec3> roof_vertices = {
-        glm::vec3(1, -0, -1),
-        glm::vec3(-1, -0, -1),
-        glm::vec3(0, 1, 0),
-        glm::vec3(-1, -0, 1),
-        glm::vec3(1, -0, 1),
-        glm::vec3(0, 1, 0),
-        glm::vec3(-1, -0, -1),
-        glm::vec3(-1, -0, 1),
-        glm::vec3(0, 1, 0),
-        glm::vec3(1, -0, 1),
-        glm::vec3(1, -0, -1),
-        glm::vec3(0, 1, 0),
-    };
-    //uv
-    std::vector<glm::vec2> roof_uvs = {
-        glm::vec2(0, 0),
-        glm::vec2(1, 0),
-        glm::vec2(0.5, 1),
-        glm::vec2(0, 0),
-        glm::vec2(1, 0),
-        glm::vec2(0.5, 1),
-        glm::vec2(0, 0),
-        glm::vec2(1, 0),
-        glm::vec2(0.5, 1),
-        glm::vec2(0, 0),
-        glm::vec2(1, 0),
-        glm::vec2(0.5, 1),
-    };
-    std::vector<glm::vec3> roof_normals = {
-        glm::vec3(-0, 0.7071, -0.7071),
-        glm::vec3(-0, 0.7071, -0.7071),
-        glm::vec3(-0, 0.7071, -0.7071),
-        glm::vec3(-0, 0.7071, 0.7071),
-        glm::vec3(-0, 0.7071, 0.7071),
-        glm::vec3(-0, 0.7071, 0.7071),
-        glm::vec3(-0.7071, 0.7071, -0),
-        glm::vec3(-0.7071, 0.7071, -0),
-        glm::vec3(-0.7071, 0.7071, -0),
-        glm::vec3(0.7071, 0.7071, -0),
-        glm::vec3(0.7071, 0.7071, -0),
-        glm::vec3(0.7071, 0.7071, -0),
-    };
-    glm::mat4 model = base->getModel();
-    Mesh* roof = new Mesh(roof_vertices, roof_uvs, roof_normals);
-    roof->setModel(model);
-    roof->translate(glm::vec3(0, 0.9, 0));
-    roof->rotate(rot.y, glm::vec3(0, 1, 0));
-    roof->rotate(rot.x, glm::vec3(1, 0, 0));
-    roof->scale(glm::vec3(1.2, 1.2, 1.2));
-    roof->setColorTexture(roof_text[0]);
-    roof->setNormalTexture(roof_text[1]);
-    roof->setShader(shader);
-    meshes.push_back(base);
-    meshes.push_back(roof);
+// std::vector<Mesh*> house(glm::vec3 pos, glm::vec3 rot, Texture *house_text[], float house_reps, Texture *roof_text[], Texture* fire, Shader *shader, std::vector<glm::vec3> &lightPositions)
+// {
+//     std::vector<Mesh*> meshes;
+//     Mesh* base = cube(pos, rot, house_text, house_reps, shader);
+//     // base->setShader(shader);
+//     std::vector<glm::vec3> roof_vertices = {
+//         glm::vec3(1, -0, -1),
+//         glm::vec3(-1, -0, -1),
+//         glm::vec3(0, 1, 0),
+//         glm::vec3(-1, -0, 1),
+//         glm::vec3(1, -0, 1),
+//         glm::vec3(0, 1, 0),
+//         glm::vec3(-1, -0, -1),
+//         glm::vec3(-1, -0, 1),
+//         glm::vec3(0, 1, 0),
+//         glm::vec3(1, -0, 1),
+//         glm::vec3(1, -0, -1),
+//         glm::vec3(0, 1, 0),
+//     };
+//     //uv
+//     std::vector<glm::vec2> roof_uvs = {
+//         glm::vec2(0, 0),
+//         glm::vec2(1, 0),
+//         glm::vec2(0.5, 1),
+//         glm::vec2(0, 0),
+//         glm::vec2(1, 0),
+//         glm::vec2(0.5, 1),
+//         glm::vec2(0, 0),
+//         glm::vec2(1, 0),
+//         glm::vec2(0.5, 1),
+//         glm::vec2(0, 0),
+//         glm::vec2(1, 0),
+//         glm::vec2(0.5, 1),
+//     };
+//     std::vector<glm::vec3> roof_normals = {
+//         glm::vec3(-0, 0.7071, -0.7071),
+//         glm::vec3(-0, 0.7071, -0.7071),
+//         glm::vec3(-0, 0.7071, -0.7071),
+//         glm::vec3(-0, 0.7071, 0.7071),
+//         glm::vec3(-0, 0.7071, 0.7071),
+//         glm::vec3(-0, 0.7071, 0.7071),
+//         glm::vec3(-0.7071, 0.7071, -0),
+//         glm::vec3(-0.7071, 0.7071, -0),
+//         glm::vec3(-0.7071, 0.7071, -0),
+//         glm::vec3(0.7071, 0.7071, -0),
+//         glm::vec3(0.7071, 0.7071, -0),
+//         glm::vec3(0.7071, 0.7071, -0),
+//     };
+//     glm::mat4 model = base->getModel();
+//     Mesh* roof = new Mesh(roof_vertices, roof_uvs, roof_normals);
+//     roof->setModel(model);
+//     roof->translate(glm::vec3(0, 0.9, 0));
+//     roof->rotate(rot.y, glm::vec3(0, 1, 0));
+//     roof->rotate(rot.x, glm::vec3(1, 0, 0));
+//     roof->scale(glm::vec3(1.2, 1.2, 1.2));
+//     roof->setColorTexture(roof_text[0]);
+//     roof->setNormalTexture(roof_text[1]);
+//     roof->setShader(shader);
+//     meshes.push_back(base);
+//     meshes.push_back(roof);
 
-    //torches
-    float torchLength = 0.5;
-    int torchAngle = -35;
-    float torchPos = 0.7;
-    float torchHeight = 0.4;
-    float torchBallRadius = 0.1;
-    Mesh* torch1 = cylinder(torchLength, 0.03, roof_text[0], shader);
-    torch1->setModel(model);
-    torch1->translate(glm::vec3(1, torchHeight, -torchPos));
-    torch1->rotate(torchAngle, glm::vec3(0, 0, 1));
-    meshes.push_back(torch1);
+//     //torches
+//     float torchLength = 0.5;
+//     int torchAngle = -35;
+//     float torchPos = 0.7;
+//     float torchHeight = 0.4;
+//     float torchBallRadius = 0.1;
+//     Mesh* torch1 = cylinder(torchLength, 0.03, roof_text[0], shader);
+//     torch1->setModel(model);
+//     torch1->translate(glm::vec3(1, torchHeight, -torchPos));
+//     torch1->rotate(torchAngle, glm::vec3(0, 0, 1));
+//     meshes.push_back(torch1);
 
-    //torch ball 1
-    Sphere *torchBall1 = new Sphere(torchBallRadius, 10, 10);
-    torchBall1->setModel(torch1->getModel());
-    //based on the angle of the torch and the length, but the ball at the end of the torch
-    torchBall1->translate(glm::vec3(0, torchLength, 0));
+//     //torch ball 1
+//     Sphere *torchBall1 = new Sphere(torchBallRadius, 10, 10);
+//     torchBall1->setModel(torch1->getModel());
+//     //based on the angle of the torch and the length, but the ball at the end of the torch
+//     torchBall1->translate(glm::vec3(0, torchLength, 0));
 
-    torchBall1->setColorTexture(fire);
-    torchBall1->setNormalTexture(roof_text[1]);
-    torchBall1->setShader(shader);
+//     torchBall1->setColorTexture(fire);
+//     torchBall1->setNormalTexture(roof_text[1]);
+//     torchBall1->setShader(shader);
 
-    glm::vec3 torchBall1Pos = glm::vec3(torchBall1->getModel() * glm::vec4(1, 1, 1, 1));
-    lightPositions.push_back(torchBall1Pos);
-    meshes.push_back(torchBall1);
+//     glm::vec3 torchBall1Pos = glm::vec3(torchBall1->getModel() * glm::vec4(1, 1, 1, 1));
+//     lightPositions.push_back(torchBall1Pos);
+//     meshes.push_back(torchBall1);
 
 
-    Mesh* torch2 = cylinder(torchLength, 0.03, roof_text[0], shader);
-    torch2->setModel(model);
-    torch2->translate(glm::vec3(1, torchHeight, torchPos));
-    torch2->rotate(torchAngle, glm::vec3(0, 0, 1));
-    meshes.push_back(torch2);
+//     Mesh* torch2 = cylinder(torchLength, 0.03, roof_text[0], shader);
+//     torch2->setModel(model);
+//     torch2->translate(glm::vec3(1, torchHeight, torchPos));
+//     torch2->rotate(torchAngle, glm::vec3(0, 0, 1));
+//     meshes.push_back(torch2);
 
-    //torch ball 2
-    Sphere *torchBall2 = new Sphere(torchBallRadius, 10, 10);
-    torchBall2->setModel(torch2->getModel());
-    //based on the angle of the torch and the length, but the ball at the end of the torch
-    torchBall2->translate(glm::vec3(0, torchLength, 0));
-    //geth the position of the torch from the model matrix
-    glm::vec3 torchBall2Pos = glm::vec3(torchBall2->getModel() * glm::vec4(1, 1, 1, 1));
-    lightPositions.push_back(torchBall2Pos);
+//     //torch ball 2
+//     Sphere *torchBall2 = new Sphere(torchBallRadius, 10, 10);
+//     torchBall2->setModel(torch2->getModel());
+//     //based on the angle of the torch and the length, but the ball at the end of the torch
+//     torchBall2->translate(glm::vec3(0, torchLength, 0));
+//     //geth the position of the torch from the model matrix
+//     glm::vec3 torchBall2Pos = glm::vec3(torchBall2->getModel() * glm::vec4(1, 1, 1, 1));
+//     lightPositions.push_back(torchBall2Pos);
 
-    torchBall2->setColorTexture(fire);
-    torchBall2->setNormalTexture(roof_text[1]);
-    torchBall2->setShader(shader);
-    meshes.push_back(torchBall2);
+//     torchBall2->setColorTexture(fire);
+//     torchBall2->setNormalTexture(roof_text[1]);
+//     torchBall2->setShader(shader);
+//     meshes.push_back(torchBall2);
 
-    return meshes;
-}
+//     return meshes;
+// }
 
 // Mesh *sun(glm::vec3 pos, glm::vec3 rot, float shiny, int emission, Texture *texture)
 // {

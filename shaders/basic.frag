@@ -52,7 +52,7 @@ vec4 calculateLight(int index) {
 
 	Light light = lights[index];
 	vec4 color = light.color;
-	float ambientStrength = 0.00;
+	float ambientStrength = 0.05;
 
 	vec4 matColor = texture(colorTexture, UV);
 	vec4 ambient = vec4(ambientStrength, ambientStrength, ambientStrength, 1.0f) * matColor;

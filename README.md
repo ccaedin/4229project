@@ -18,4 +18,6 @@ l/L - dim/brighen power
 Torch Particles
 Army
 
-Cheap noise functions
+Cheap noise functions - exponential filter
+
+l_t = rand() * alpha + l_last * (1-alpha)

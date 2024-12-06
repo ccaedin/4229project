@@ -10,11 +10,12 @@
 class House : public Cube
 {
 public:
-    House(glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, Shader *shader);
+    House(glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, TextureGroup* brickTexture, TextureGroup* roofTexture, TextureGroup *torchTexture, TextureGroup* fireTexture, Shader* shader);
     void draw();
-    std::vector<glm::vec3> getLightPositions() { return lightPositions; }
+    std::vector<glm::vec3> getLights() { return lightPositions; }
 
 private:
+
     Texture *brickColor;
     Texture *brickNormal;
 
@@ -33,7 +34,6 @@ private:
     Mesh* roof;
 
     std::vector<glm::vec3> lightPositions;
-
 
 };
 #endif // HOUSE_H
