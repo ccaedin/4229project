@@ -1,7 +1,9 @@
 #include "House.h"
 
-House::House(glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, TextureGroup *brickTexture, TextureGroup *roofTexture, TextureGroup *torchTexture, TextureGroup *fireTexture, Shader *shader)
+House::House(glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, TextureGroup *brickTexture, TextureGroup *roofTexture, TextureGroup *torchTexture, TextureGroup *fireTexture, Shader *shader) : Cube()
 {
+    // loadOBJ("cube.obj", vertices, uvs, normals);
+    // setupMesh(vertices, uvs, normals);
     this->shader = shader;
 
     setTextureGroup(brickTexture);   

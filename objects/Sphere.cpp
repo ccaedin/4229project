@@ -2,24 +2,25 @@
 
 Sphere::Sphere(float radius, int numStacks, int numSlices): Mesh()
 {
+    // loadOBJ("sphere.obj", vertices, uvs, normals);
     this->radius = radius;
     this->numSlices = numSlices;
     this->numStacks = numStacks;
     numVertices = (numStacks + 1) * (numSlices + 1);
     
     const auto numSideStacks = numStacks - 2;
-    const auto numSlidePrimitiveRestarts = std::max(0, numSideStacks - 1);
-    numSideIndices = 2 * numSideStacks * (numSlices + 1) + numSlidePrimitiveRestarts;
+    const auto numSidePrimitiveRestarts = std::max(0, numSideStacks - 1);
+    numSideIndices = 2 * numSideStacks * (numSlices + 1) + numSidePrimitiveRestarts;
 
     numPoleIndices = numSlices * 3;
 
     northPoleOffset = 0;
     sideOffset = numPoleIndices;
     southPoleOffset = sideOffset + numSideIndices;
+    
 
     numIndices = 2 * numPoleIndices + numSideIndices;
 
-    numPoleIndices = numSlices * 3;
     int primitiveRestartIndex = numVertices;
 
     glGenVertexArrays(1, &VAO);
@@ -30,7 +31,7 @@ Sphere::Sphere(float radius, int numStacks, int numSlices): Mesh()
     std::vector<glm::vec3> normals;
     
 
-    const auto sliceAngleStep = 2.0f * glm::pi<float>() / numSlices;
+    const auto sliceAngleStep = 2.0f * glm::pi<float>() / static_cast<float>(numSlices);
     auto currentAngle = 0.0f;
     std::vector<float> sliceSines, sliceCosines;
     for (int i = 0; i <= numSlices; i++)
@@ -40,7 +41,7 @@ Sphere::Sphere(float radius, int numStacks, int numSlices): Mesh()
         currentAngle += sliceAngleStep;
     }
 
-    const auto stackAngleStep = -glm::pi<float>() / (numStacks);
+    const auto stackAngleStep = -glm::pi<float>() / static_cast<float>(numStacks);
     currentAngle = glm::pi<float>() / 2.0f;
     std::vector<float> stackSines, stackCosines;
     for (int i = 0; i <= numStacks; i++)
@@ -49,7 +50,7 @@ Sphere::Sphere(float radius, int numStacks, int numSlices): Mesh()
         stackCosines.push_back(cos(currentAngle));
         currentAngle += stackAngleStep;
     }
-
+    
     //positions
     for(int i =0; i<= numStacks; i++)
     {
@@ -59,6 +60,9 @@ Sphere::Sphere(float radius, int numStacks, int numSlices): Mesh()
             const auto baseY = stackSines[i];
             const auto baseZ = stackCosines[i] * sliceSines[j];
             vertices.push_back(glm::vec3(baseX * radius, baseY * radius, baseZ * radius));
+
+            //if last verti is near 0, print fdfsdf
+            std::cout << "Sphere Vertices: " << baseX * radius << " " << baseY * radius << " " << baseZ * radius << std::endl;
 
             const auto u = 1.0f - static_cast<float>(j) / numSlices;
             const auto v = 1.0f - static_cast<float>(i) / numStacks;
@@ -105,6 +109,7 @@ Sphere::Sphere(float radius, int numStacks, int numSlices): Mesh()
         indices.push_back(nextSliceIndex);
     }
 
+    //breaks if I change this
     setupMesh(vertices, uvs, normals);
 
     glBindVertexArray(VAO);
@@ -119,10 +124,10 @@ void Sphere::draw()
 
     glBindVertexArray(VAO);
     
-
+    // glDrawArrays(GL_TRIANGLES, 0, vertices.size());
     glEnable(GL_PRIMITIVE_RESTART);
     //north always starts at 0
-    glDrawElements(GL_TRIANGLES, numPoleIndices, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, numPoleIndices+1, GL_UNSIGNED_INT, 0);
 
     glDrawElements(GL_TRIANGLE_STRIP, numSideIndices, GL_UNSIGNED_INT, (void*)(sideOffset * sizeof(GLuint)));
 
@@ -133,6 +138,18 @@ void Sphere::draw()
 
 void Sphere::computeTangentBasis(std::vector<glm::vec3> &vertices, std::vector<glm::vec2> &uvs, std::vector<glm::vec3> &normals, std::vector<glm::vec3> &tangents, std::vector<glm::vec3> &bitangents)
 {
+
+    std::vector<glm::vec3> unindexedVertices;
+    std::vector<glm::vec2> unindexedUvs;
+    std::vector<glm::vec3> unindexedNormals;
+
+    for (int i = 0; i < indices.size(); i++)
+    {
+        unindexedVertices.push_back(vertices[indices[i]]);
+        unindexedUvs.push_back(uvs[indices[i]]);
+        unindexedNormals.push_back(normals[indices[i]]);
+    }
+
     // //call the parent class
     // for (int i=0; i<=numSideVertices; i+=3 ){
 

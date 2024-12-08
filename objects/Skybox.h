@@ -5,7 +5,7 @@ class Skybox : public Cube
 {
     public:
         Skybox(Camera *camera);
-        void draw() override;
+        void draw();
     private:
         void setupDraw();
         Camera *camera;

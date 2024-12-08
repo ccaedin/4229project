@@ -8,7 +8,7 @@ class Cylinder : public Mesh
 {
 public:
     Cylinder(float len, float wid);
-    void draw() override;
+    void draw();
     void computeTangentBasis(
         // inputs
         std::vector<glm::vec3> & vertices,
@@ -16,7 +16,7 @@ public:
         std::vector<glm::vec3> & normals,
         // outputs
         std::vector<glm::vec3> & tangents,
-        std::vector<glm::vec3> & bitangents) override;
+        std::vector<glm::vec3> & bitangents);
 
 private:
     int numSideVertices;

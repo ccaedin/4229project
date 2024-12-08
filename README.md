@@ -21,3 +21,7 @@ Army
 Cheap noise functions - exponential filter
 
 l_t = rand() * alpha + l_last * (1-alpha)
+
+Okay so last spheres that are rendered are bigger than the other?
+
+problem with sphere, probably not enough time for particle so I will use gjdsfklajl;kk;jldfsgdf;kljsdfa;jklasdfj;lksdfkjl;sacdfxasd;fjlkasdf;jklasfdjlk;./asfdgsfjkl;dasdfk;jlasasedrfjlt;k'fsdajl;k'asdf

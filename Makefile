@@ -44,12 +44,13 @@ objects/Cube.o: objects/Cube.cpp objects/Cube.h
 objects/Skybox.o: objects/Skybox.cpp objects/Skybox.h
 objects/House.o: objects/House.cpp objects/House.h
 objects/Tree.o: objects/Tree.cpp objects/Tree.h
+objects/Human.o: objects/Human.cpp objects/Human.h
 
 
 objects/%.o: objects/%.cpp
 	$(CXX) -c $(CFLG) -o $@ $<
 
-objects.a: objects/Cylinder.o objects/Sphere.o objects/Cube.o objects/Skybox.o objects/House.o objects/Tree.o
+objects.a: objects/Cylinder.o objects/Sphere.o objects/Cube.o objects/Skybox.o objects/House.o objects/Tree.o objects/Human.o
 	ar -rcs $@ $^
 
 $(EXE): army.o Text.o Camera.o shapes.o Texture.o Shader.o Mesh.o objects.a

@@ -6,6 +6,7 @@
 #include "Cube.h"
 #include "Cylinder.h"
 #include "Sphere.h"
+#include "../Mesh.h"
 
 class House : public Cube
 {

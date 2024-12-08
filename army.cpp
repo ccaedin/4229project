@@ -14,6 +14,7 @@
 #include "objects/Skybox.h"
 #include "objects/House.h"
 #include "objects/Tree.h"
+#include "objects/Human.h"
 
 // settings
 static void draw_screen(float deltaTime);
@@ -136,6 +137,19 @@ std::vector<Mesh*> houseMesh;
 Mesh *plane = nullptr;
 std::vector<House*> houses(10);
 std::vector<Tree*> trees;
+struct Solider
+{
+    Human* human;
+};
+struct Army
+{
+    std::vector<Human*> soliders;
+    glm::vec3 offset;
+    int arm_angle = 180;
+    int leg_angle = 90;
+};
+Army army;
+bool army_changed = true;
 Cylinder* cylinderMesh = nullptr;
 Sphere* sphereMesh = nullptr;
 Skybox* skybox = nullptr;
@@ -240,6 +254,7 @@ int main(int argc, char *argv[])
     TextureGroup* brick_texture_group = new TextureGroup(brick_textures[0], brick_textures[1]);
     TextureGroup* roof_texture_group = new TextureGroup(roof_textures[0], roof_textures[1]);
     TextureGroup* fire_texture_group = new TextureGroup(fire_texture, fire_texture);
+    TextureGroup *body_texture = new TextureGroup(std::vector<std::string>{"./textures/fabric/color.jpg", "./textures/fabric/normal.png"});
     TextureGroup* torch_texture_group = new TextureGroup(std::vector<std::string>{"./textures/wood/color.jpg", "./textures/wood/normal.png"});
 
     // houseMesh = house(glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), brick_textures, 2, roof_textures, shader, lightPositions);
@@ -254,6 +269,25 @@ int main(int argc, char *argv[])
         // lightPositions.push_back(glm::vec3(-6, 0.0, i + 1));
         houses[index++] = new House(glm::vec3(6, 0.0, i + 1), glm::vec3(1,1,1), glm::vec3(0, 180, 0), brick_texture_group, roof_texture_group, torch_texture_group, fire_texture_group, shader);
         lightPositionsTemp.push_back(glm::vec3(6, 0.0, i + 1));
+    }
+    army_changed = false;
+    army.soliders.clear();
+
+    // setup army
+    for (int g = 0; g < number_groups; g++)
+    {
+        for (int i = 0; i < number_rows; i++)
+        {
+            for (int j = 0; j < number_rows - i; j++)
+            {
+
+                float group_offset = (number_groups - 1) * (number_rows + 1) / 2.0;
+                Human* human = new Human(glm::vec3((j - (number_rows - i) / 2.0), -0.5, i - 2 + g * (number_rows + 1) - group_offset - 10), glm::vec3(0, 0,0), 1, 1, body_texture, brick_texture_group, shader);
+
+                army.soliders.push_back(human);
+                
+            }
+        }
     }
 
 
@@ -276,17 +310,17 @@ int main(int argc, char *argv[])
         trees.push_back(new Tree(glm::vec3(-9.5, 0.0, i + 1), 1, 0.1, wood_texture_group, leaves_texture_group, shader));
         trees.push_back(new Tree(glm::vec3(9.5, 0.0, i + 1), 1, 0.1, wood_texture_group, leaves_texture_group, shader));
     }
-    // cylinderMesh = new Cylinder(.5, 0.03);
-    // cylinderMesh->setShader(shader);
-    // cylinderMesh->setColorTexture(brick);
-    // cylinderMesh->setNormalTexture(brick_normal);
-    // cylinderMesh->translate(glm::vec3(0, 0, 0));
+    cylinderMesh = new Cylinder(.5, 0.03);
+    cylinderMesh->setShader(shader);
+    cylinderMesh->setColorTexture(brick);
+    cylinderMesh->setNormalTexture(brick_normal);
+    cylinderMesh->translate(glm::vec3(0, 0, 0));
 
-    // sphereMesh = new Sphere(0.5, 20, 20);
-    // sphereMesh->setShader(shader);
-    // sphereMesh->setColorTexture(brick);
-    // sphereMesh->setNormalTexture(brick_normal);
-    // sphereMesh->translate(glm::vec3(0, 2, 0));
+    sphereMesh = new Sphere(0.5, 10, 10);
+    sphereMesh->setShader(shader);
+    sphereMesh->setColorTexture(brick);
+    sphereMesh->setNormalTexture(brick_normal);
+    sphereMesh->translate(glm::vec3(0, 1, 0));
 
 
     // ennable depth testing
@@ -430,10 +464,6 @@ static void draw_screen(float deltaTime)
     shader->setFloat("flashLight.cutOff", cos(glm::radians(12.5f)));
 
     plane->draw();
-    // for(auto house : houseMesh)
-    // {
-    //     house->draw();
-    // }
 
     for(auto house : houses)
     {
@@ -445,13 +475,51 @@ static void draw_screen(float deltaTime)
         tree->draw();
     }
 
+    for(auto solider : army.soliders)
+    {
+        if(!stop_army)
+        solider->update(glm::vec3(0,0,march), glm::vec3(0, 0, 0), army.arm_angle, army.leg_angle);
+        // solider->draw();
+    }
+    int angleChange = 5;
+    arm_angle_backwards = army.arm_angle > 160 ? true : army.arm_angle < 40 ? false
+                                                                            : arm_angle_backwards;
+    leg_angle_backwards = army.leg_angle > 270 ? true : army.leg_angle < 90 ? false
+                                                                            : leg_angle_backwards;
+    arm_angle_backwards ? army.arm_angle-=angleChange : army.arm_angle+=angleChange;
+    leg_angle_backwards ? army.leg_angle-=angleChange : army.leg_angle+=angleChange;
+    if(!stop_army)
+    {
+        army.offset += glm::vec3(0, 0, march);
+        if (army.offset.z > 25)
+        {
+            int index = 0;
+            for (int g = 0; g < number_groups; g++)
+            {
+                for (int i = 0; i < number_rows; i++)
+                {
+                    for (int j = 0; j < number_rows - i; j++)
+                    {
+
+                        float group_offset = (number_groups - 1) * (number_rows + 1) / 2.0;
+                        army.soliders[index]->set(glm::vec3((j - (number_rows - i) / 2.0), -0.5, i - 2 + g * (number_rows + 1) - group_offset - 10), glm::vec3(0, 0,0));
+                        // Human* human = new Human(glm::vec3((j - (number_rows - i) / 2.0), -0.5, i - 2 + g * (number_rows + 1) - group_offset), glm::vec3(0, 0,0), 1, 1, body_texture, brick_texture_group, shader);
+                        index++;
+                    }
+                }
+            }
+            army.offset.z = 0;
+        }
+
+    }
+
     skybox->getShader()->use();
     skybox->getShader()->setMat4("projection", projection);
     skybox->getShader()->setMat4("view", view);
     skybox->draw();
 
     // cylinderMesh->draw();
-    // sphereMesh->draw();
+    sphereMesh->draw();
     glUseProgram(0);
     glLoadIdentity();
     camera.Look();
@@ -560,11 +628,11 @@ void handle_key_event(SDL_Event event)
         case SDLK_p:
             if(SDL_GetModState() & KMOD_SHIFT)
             {
-                stop_army = !stop_army;
+                stop_sun = !stop_sun;
             }
             else
             {
-                stop_sun = !stop_sun;
+                stop_army = !stop_army;
             }
             break;
         case SDLK_t:

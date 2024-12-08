@@ -12,7 +12,7 @@ class Mesh {
         Mesh(std::vector<glm::vec3> vertices, std::vector<glm::vec2> uvs, std::vector<glm::vec3> normals, std::vector<glm::vec3> tangents, std::vector<glm::vec3> bitangents, std::vector<GLubyte> indices);
         Mesh();
         ~Mesh();
-        virtual void draw();
+        void draw();
         void draw_indexed();
         //transformations
         void translate(glm::vec3 translation) { model = glm::translate(model, translation); }
@@ -27,6 +27,8 @@ class Mesh {
         void setNormalTexture(Texture *texture) { normalTexture = texture; }
         void setModel(glm::mat4 model) { this->model = model; }
 
+        void setInformation(TextureGroup *textureGroup, Shader *shader) { setTextureGroup(textureGroup); setShader(shader); }
+
         void setShader(Shader *shader) { this->shader = shader; }
         Shader* getShader() { return shader; }
     protected:
@@ -35,7 +37,7 @@ class Mesh {
             std::vector<glm::vec3> & out_vertices, 
             std::vector<glm::vec2> & out_uvs,
             std::vector<glm::vec3> & out_normals);
-        virtual void computeTangentBasis(
+        void computeTangentBasis(
             // inputs
             std::vector<glm::vec3> & vertices,
             std::vector<glm::vec2> & uvs,
