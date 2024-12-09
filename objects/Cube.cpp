@@ -4,3 +4,4 @@ Cube::Cube()
 {
     setupMesh(VERTICES, UVS, NORMALS);;
 }
+

@@ -1,11 +1,11 @@
 #include "House.h"
 
-House::House(glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, TextureGroup *brickTexture, TextureGroup *roofTexture, TextureGroup *torchTexture, TextureGroup *fireTexture, Shader *shader) : Cube()
+House::House(glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, TextureGroup *brickTexture, TextureGroup *roofTexture, TextureGroup *torchTexture, TextureGroup *fireTexture, Shader *shader, Shader* smokeShader, Camera* camera) : Cube()
 {
     // loadOBJ("cube.obj", vertices, uvs, normals);
     // setupMesh(vertices, uvs, normals);
     this->shader = shader;
-
+    this->camera = camera;
     setTextureGroup(brickTexture);   
 
 
@@ -101,9 +101,13 @@ House::House(glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, TextureGroup *brickT
     torch1Fire->setTextureGroup(torchTexture);
     torch1Fire->setShader(shader);
 
-    glm::vec3 torch1FirePos = glm::vec3(torch1Fire->getModel() * glm::vec4(1, 1, 1, 1));
+    // get the position of the torch from the model matrix
+    auto torch1FireModel = torch1Fire->getModel();
+    auto temp1 = torch1FireModel[3];
+    glm::vec3 torch1FirePos = glm::vec3(temp1[0], temp1[1], temp1[2]);
     lightPositions.push_back(torch1FirePos);
 
+    torch1Smoke = new Particles(torch1FirePos, camera, smokeShader);
 
     torch2 = new Cylinder(torchLength, 0.03);
     
@@ -124,17 +128,24 @@ House::House(glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, TextureGroup *brickT
     //based on the angle of the torch and the length, but the ball at the end of the torch
     torch2Fire->translate(glm::vec3(0, torchLength, 0));
     //geth the position of the torch from the model matrix
-    glm::vec3 torch2FirePos = glm::vec3(torch2Fire->getModel() * glm::vec4(1, 1, 1, 1));
+    auto torch2FireModel = torch2Fire->getModel();
+
+    auto temp = torch2FireModel[3];
+    glm::vec3 torch2FirePos = glm::vec3(temp[0], temp[1], temp[2]);
     lightPositions.push_back(torch2FirePos);
+
+    torch2Smoke = new Particles(torch2FirePos, camera, smokeShader);
 }
 
-void House::draw()
+void House::draw(float deltaTime)
 {
     Cube::draw();
     roof->draw();
     torch1->draw();
     torch1Fire->draw();
+    torch1Smoke->draw(deltaTime);
     torch2->draw();
     torch2Fire->draw();
+    torch2Smoke->draw(deltaTime);
 
 }

@@ -52,7 +52,7 @@ vec4 calculateLight(int index) {
 
 	Light light = lights[index];
 	vec4 color = light.color;
-	float ambientStrength = 0.05;
+	float ambientStrength = 0.00;
 
 	vec4 matColor = texture(colorTexture, UV);
 	vec4 ambient = vec4(ambientStrength, ambientStrength, ambientStrength, 1.0f) * matColor;
@@ -100,11 +100,6 @@ vec4 calculateFlashLight() {
 		//test if 0 return white
 		float cosTheta = clamp(dot(n, l), 0, 1);
 		vec4 R = reflect(-l, n);
-
-		// float cosAlpha = 1/clamp(dot(normalizeCameraTanget, R), 0, 1);
-		// if(distToLight > 0.0f && cosTheta > 0.0f){
-		// 	return vec4(1.0f, 1.0f, 1.0f, 1.0f);
-		// }
 		return 
 			ambient +
 			matColor * color * light.power * cosTheta / (distToLight*distToLight);

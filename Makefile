@@ -38,6 +38,7 @@ shapes.o: shapes.cpp shapes.h
 Texture.o: Texture.cpp Texture.h
 Shader.o: Shader.cpp Shader.h
 Mesh.o: Mesh.cpp Mesh.h
+Particles.o: Particles.cpp Particles.h
 objects/Cylinder.o: objects/Cylinder.cpp objects/Cylinder.h
 objects/Sphere.o: objects/Sphere.cpp objects/Sphere.h
 objects/Cube.o: objects/Cube.cpp objects/Cube.h
@@ -53,7 +54,7 @@ objects/%.o: objects/%.cpp
 objects.a: objects/Cylinder.o objects/Sphere.o objects/Cube.o objects/Skybox.o objects/House.o objects/Tree.o objects/Human.o
 	ar -rcs $@ $^
 
-$(EXE): army.o Text.o Camera.o shapes.o Texture.o Shader.o Mesh.o objects.a
+$(EXE): army.o Text.o Camera.o shapes.o Texture.o Shader.o Mesh.o Particles.o objects.a
 	$(CXX) $(CFLG) -o $@ $^ $(LIBS)
 
 

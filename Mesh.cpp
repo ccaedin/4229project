@@ -357,6 +357,7 @@ Mesh::Mesh(std::vector<glm::vec3> vertices, std::vector<glm::vec2> uvs, std::vec
 
 void Mesh::draw()
 {
+    glBindVertexArray(VAO);
     //how to call the Skybox setup function from here
     setupDraw();
     glDrawArrays(GL_TRIANGLES, 0, vertices.size());
@@ -367,6 +368,7 @@ void Mesh::draw()
     glDisableVertexAttribArray(2);
     glDisableVertexAttribArray(3);
     glDisableVertexAttribArray(4);
+    glBindVertexArray(0);
 }
 
 void Mesh::draw_indexed()

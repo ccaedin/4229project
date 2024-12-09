@@ -238,6 +238,7 @@ void Cylinder::computeTangentBasis(
     }
 }
 void Cylinder::draw() {
+    glBindVertexArray(VAO);
     setupDraw();
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, numSideVertices);
@@ -252,4 +253,5 @@ void Cylinder::draw() {
     glDisableVertexAttribArray(2);
     glDisableVertexAttribArray(3);
     glDisableVertexAttribArray(4);
+    glBindVertexArray(0);
 }

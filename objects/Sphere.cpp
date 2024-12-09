@@ -1,5 +1,6 @@
 #include "Sphere.h"
 
+//adapted from https://songho.ca/opengl/gl_sphere.html
 Sphere::Sphere(float radius, int numStacks, int numSlices): Mesh()
 {
     // loadOBJ("sphere.obj", vertices, uvs, normals);
@@ -8,249 +9,290 @@ Sphere::Sphere(float radius, int numStacks, int numSlices): Mesh()
     this->numStacks = numStacks;
     numVertices = (numStacks + 1) * (numSlices + 1);
     
-    const auto numSideStacks = numStacks - 2;
-    const auto numSidePrimitiveRestarts = std::max(0, numSideStacks - 1);
-    numSideIndices = 2 * numSideStacks * (numSlices + 1) + numSidePrimitiveRestarts;
+    float x;
+    float y;
+    float z;
+    float xy;
 
-    numPoleIndices = numSlices * 3;
+    float nx;
+    float ny;
+    float nz;
+    float lengthInv = 1.0f / radius;
 
-    northPoleOffset = 0;
-    sideOffset = numPoleIndices;
-    southPoleOffset = sideOffset + numSideIndices;
-    
+    float s;
+    float t;
 
-    numIndices = 2 * numPoleIndices + numSideIndices;
+    float sectorStep = 2 * M_PI / numSlices;
+    float stackStep = M_PI / numStacks;
 
-    int primitiveRestartIndex = numVertices;
+    for(int i=0; i<= numStacks; i++)
+    {
+        float stackAngle = M_PI / 2 - i * stackStep;
+        xy = radius * cosf(stackAngle);
+        z = radius * sinf(stackAngle);
 
+        for(int j=0; j<=numSlices; j++)
+        {
+            float sectorAngle = j * sectorStep;
+
+            x = xy * cosf(sectorAngle);
+            y = xy * sinf(sectorAngle);
+
+            vertices.push_back(glm::vec3(x, y, z));
+            nx = x * lengthInv;
+            ny = y * lengthInv;
+            nz = z * lengthInv;
+            normals.push_back(glm::vec3(nx, ny, nz));
+
+            s = (float)j / numSlices;
+            t = (float)i / numStacks;
+            uvs.push_back(glm::vec2(s, t));
+        }
+    }
+
+    unsigned int k1, k2;
+    for(int i=0; i<numStacks; i++)
+    {
+        k1 = i * (numSlices + 1);
+        k2 = k1 + numSlices + 1;
+
+        for(int j=0; j<numSlices; j++, k1++, k2++)
+        {
+            if(i != 0)
+            {
+                indices.push_back(k1);
+                indices.push_back(k2);
+                indices.push_back(k1 + 1);
+            }
+
+            if(i != (numStacks - 1))
+            {
+                indices.push_back(k1 + 1);
+                indices.push_back(k2);
+                indices.push_back(k2 + 1);
+            }
+
+        }
+    }
+    // setupMesh(vertices, uvs, normals);
+    this->vertices = vertices;
+    this->uvs = uvs;
+    this->normals = normals;
+    tangents.resize(vertices.size());
+    bitangents.resize(vertices.size());
+    Sphere::computeTangentBasis(vertices, uvs, normals, tangents, bitangents);
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 
-    std::vector<glm::vec3> vertices;
-    std::vector<glm::vec2> uvs;
-    std::vector<glm::vec3> normals;
-    
+    glGenBuffers(1, &vertexBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
 
-    const auto sliceAngleStep = 2.0f * glm::pi<float>() / static_cast<float>(numSlices);
-    auto currentAngle = 0.0f;
-    std::vector<float> sliceSines, sliceCosines;
-    for (int i = 0; i <= numSlices; i++)
-    {
-        sliceSines.push_back(sin(currentAngle));
-        sliceCosines.push_back(cos(currentAngle));
-        currentAngle += sliceAngleStep;
-    }
+    glGenBuffers(1, &uvBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
+    glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(glm::vec2), &uvs[0], GL_STATIC_DRAW);
 
-    const auto stackAngleStep = -glm::pi<float>() / static_cast<float>(numStacks);
-    currentAngle = glm::pi<float>() / 2.0f;
-    std::vector<float> stackSines, stackCosines;
-    for (int i = 0; i <= numStacks; i++)
-    {
-        stackSines.push_back(sin(currentAngle));
-        stackCosines.push_back(cos(currentAngle));
-        currentAngle += stackAngleStep;
-    }
-    
-    //positions
-    for(int i =0; i<= numStacks; i++)
-    {
-        for(int j = 0; j<= numSlices; j++)
-        {
-            const auto baseX = stackCosines[i] * sliceCosines[j];
-            const auto baseY = stackSines[i];
-            const auto baseZ = stackCosines[i] * sliceSines[j];
-            vertices.push_back(glm::vec3(baseX * radius, baseY * radius, baseZ * radius));
+    glGenBuffers(1, &normalBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
+    glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
 
-            //if last verti is near 0, print fdfsdf
-            std::cout << "Sphere Vertices: " << baseX * radius << " " << baseY * radius << " " << baseZ * radius << std::endl;
+    glGenBuffers(1, &tangentBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, tangentBuffer);
+    glBufferData(GL_ARRAY_BUFFER, tangents.size() * sizeof(glm::vec3), &tangents[0], GL_STATIC_DRAW);
 
-            const auto u = 1.0f - static_cast<float>(j) / numSlices;
-            const auto v = 1.0f - static_cast<float>(i) / numStacks;
-            uvs.push_back(glm::vec2(u, v));
+    glGenBuffers(1, &bitangentBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, bitangentBuffer);
+    glBufferData(GL_ARRAY_BUFFER, bitangents.size() * sizeof(glm::vec3), &bitangents[0], GL_STATIC_DRAW);
 
-            normals.push_back(glm::vec3(baseX, baseY, baseZ));
-        }
-    }
-    //generate indices north
-    for(int i = 0; i <=numSlices; i++)
-    {
-        GLuint sliceIndex = i;
-        GLuint nextSliceIndex = sliceIndex +numSlices + 1;
-        indices.push_back(sliceIndex);
-        indices.push_back(nextSliceIndex);
-        indices.push_back(nextSliceIndex + 1);
-    }
-    //gen indices side
-    GLuint currentVertexIndex = numSlices + 1;
-    for(int i =0; i < numSideStacks; i++)
-    {
-        if(i > 0)
-        {
-            indices.push_back(primitiveRestartIndex);
-        }
-        for(int j = 0; j <= numSlices; j++)
-        {
-            GLuint sliceIndex = currentVertexIndex + j;
-            GLuint nextSliceIndex = currentVertexIndex + numSlices + 1 + j;
-            indices.push_back(sliceIndex);
-            indices.push_back(nextSliceIndex);
-        }
-        currentVertexIndex += numSlices + 1;
-    }
-
-    //gen indices south
-    GLuint beforeLastStackIndexOffset = numVertices - 2*(numSlices + 1);
-    for(int i=0; i< numSlices; i++)
-    {
-        GLuint sliceIndex = beforeLastStackIndexOffset + i;
-        GLuint nextSliceIndex = sliceIndex + numSlices + 1;
-        indices.push_back(sliceIndex);
-        indices.push_back(sliceIndex + 1);
-        indices.push_back(nextSliceIndex);
-    }
-
-    //breaks if I change this
-    setupMesh(vertices, uvs, normals);
-
-    glBindVertexArray(VAO);
+    // glBindVertexArray(VAO);
     glGenBuffers(1, &indexBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, numIndices * sizeof(GLuint), &indices[0], GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
 }
 
 void Sphere::draw()
 {
-    setupDraw();
-
+    //print radius
     glBindVertexArray(VAO);
-    
-    // glDrawArrays(GL_TRIANGLES, 0, vertices.size());
-    glEnable(GL_PRIMITIVE_RESTART);
-    //north always starts at 0
-    glDrawElements(GL_TRIANGLES, numPoleIndices+1, GL_UNSIGNED_INT, 0);
+    setupDraw();
+    //set the index buffer
+    int temp_offset = 0;
+    glDrawElements(GL_TRIANGLES, indices.size()-temp_offset, GL_UNSIGNED_INT, (void*)(temp_offset* sizeof(GLuint)));
 
-    glDrawElements(GL_TRIANGLE_STRIP, numSideIndices, GL_UNSIGNED_INT, (void*)(sideOffset * sizeof(GLuint)));
+    //draw normals tangents and bitangents for debugging
+    // glDrawArrays(GL_LINES, 0, vertices.size());
+    // glDrawArrays(GL_LINES, 0, vertices.size());
+    // glDrawArrays(GL_LINES, 0, vertices.size());
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
+    glDisableVertexAttribArray(3);
+    glDisableVertexAttribArray(4);
+    glBindVertexArray(0);
 
-    glDrawElements(GL_TRIANGLES, numPoleIndices, GL_UNSIGNED_INT, (void*)(southPoleOffset * sizeof(GLuint)));
-
-    glDisable(GL_PRIMITIVE_RESTART);
 }
 
-void Sphere::computeTangentBasis(std::vector<glm::vec3> &vertices, std::vector<glm::vec2> &uvs, std::vector<glm::vec3> &normals, std::vector<glm::vec3> &tangents, std::vector<glm::vec3> &bitangents)
-{
+void Sphere::computeTangentBasis(
+	// inputs
+	std::vector<glm::vec3> & vertices,
+	std::vector<glm::vec2> & uvs,
+	std::vector<glm::vec3> & normals,
+	// outputs
+	std::vector<glm::vec3> & tangents,
+	std::vector<glm::vec3> & bitangents
+) {
 
-    std::vector<glm::vec3> unindexedVertices;
-    std::vector<glm::vec2> unindexedUvs;
-    std::vector<glm::vec3> unindexedNormals;
-
-    for (int i = 0; i < indices.size(); i++)
+    unsigned int k1, k2;
+    for(int i=0; i<numStacks; i++)
     {
-        unindexedVertices.push_back(vertices[indices[i]]);
-        unindexedUvs.push_back(uvs[indices[i]]);
-        unindexedNormals.push_back(normals[indices[i]]);
+        k1 = i * (numSlices + 1);
+        k2 = k1 + numSlices + 1;
+
+        for(int j=0; j<numSlices; j++, k1++, k2++)
+        {
+            if(i != 0)
+            {
+                // indices.push_back(k1);
+                // indices.push_back(k2);
+                // indices.push_back(k1 + 1);
+                		// Shortcuts for vertices
+                glm::vec3 & v0 = vertices[k1];
+                glm::vec3 & v1 = vertices[k2];
+                glm::vec3 & v2 = vertices[k1+1];
+
+                // Shortcuts for UVs
+                // glm::vec2 & uv0 = uvs[i+0];
+                // glm::vec2 & uv1 = uvs[i+1];
+                // glm::vec2 & uv2 = uvs[i+2];
+                glm::vec2 & uv0 = uvs[k1];
+                glm::vec2 & uv1 = uvs[k2];
+                glm::vec2 & uv2 = uvs[k1+1];
+
+                // Edges of the triangle : postion delta
+                glm::vec3 deltaPos1 = v1-v0;
+                glm::vec3 deltaPos2 = v2-v0;
+
+                // UV delta
+                glm::vec2 deltaUV1 = uv1-uv0;
+                glm::vec2 deltaUV2 = uv2-uv0;
+
+
+                float uvDeterminant = deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x;
+                float r = (uvDeterminant);
+                glm::vec3 tangent = (deltaPos1 * deltaUV2.y   - deltaPos2 * deltaUV1.y)*r;
+                glm::vec3 bitangent = (deltaPos2 * deltaUV1.x   - deltaPos1 * deltaUV2.x)*r;
+                #ifdef DEBUG
+                std::cout << "Tangent: " << tangent.x << " " << tangent.y << " " << tangent.z << std::endl;
+                #endif
+                // Set the same tangent for all three vertices of the triangle.
+                tangents.push_back(tangent);
+                tangents.push_back(tangent);
+                tangents.push_back(tangent);
+
+                bitangents.push_back(bitangent);
+                bitangents.push_back(bitangent);
+                bitangents.push_back(bitangent);
+
+            }
+
+            if(i != (numStacks - 1))
+            {
+                // indices.push_back(k1 + 1);
+                // indices.push_back(k2);
+                // indices.push_back(k2 + 1);
+                glm::vec3 & v0 = vertices[k1+1];
+                glm::vec3 & v1 = vertices[k2];
+                glm::vec3 & v2 = vertices[k2+1];
+
+                // Shortcuts for UVs
+                glm::vec2 & uv0 = uvs[i+0];
+                glm::vec2 & uv1 = uvs[i+1];
+                glm::vec2 & uv2 = uvs[i+2];
+
+                // Edges of the triangle : postion delta
+                glm::vec3 deltaPos1 = v1-v0;
+                glm::vec3 deltaPos2 = v2-v0;
+
+                // UV delta
+                glm::vec2 deltaUV1 = uv1-uv0;
+                glm::vec2 deltaUV2 = uv2-uv0;
+
+
+                float uvDeterminant = deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x;
+                float r = 1.0f/(uvDeterminant);
+                glm::vec3 tangent = (deltaPos1 * deltaUV2.y   - deltaPos2 * deltaUV1.y)*r;
+                glm::vec3 bitangent = (deltaPos2 * deltaUV1.x   - deltaPos1 * deltaUV2.x)*r;
+                #ifdef DEBUG
+                std::cout << "Tangent: " << tangent.x << " " << tangent.y << " " << tangent.z << std::endl;
+                #endif
+                // Set the same tangent for all three vertices of the triangle.
+                tangents.push_back(tangent);
+                tangents.push_back(tangent);
+                tangents.push_back(tangent);
+
+                bitangents.push_back(bitangent);
+                bitangents.push_back(bitangent);
+                bitangents.push_back(bitangent);
+            }
+
+        }
     }
 
-    // //call the parent class
-    // for (int i=0; i<=numSideVertices; i+=3 ){
+	for (unsigned int i=0; i<indices.size(); i+=3 ){
 
-    //     // Shortcuts for vertices
-    //     glm::vec3 & v0 = vertices[i+0];
-    //     glm::vec3 & v1 = vertices[i+1];
-    //     glm::vec3 & v2 = vertices[i+2];
+		// Shortcuts for vertices
+		glm::vec3 & v0 = vertices[i+0];
+		glm::vec3 & v1 = vertices[i+1];
+		glm::vec3 & v2 = vertices[i+2];
 
-    //     // Shortcuts for UVs
-    //     glm::vec2 & uv0 = uvs[i+0];
-    //     glm::vec2 & uv1 = uvs[i+1];
-    //     glm::vec2 & uv2 = uvs[i+2];
+		// Shortcuts for UVs
+		glm::vec2 & uv0 = uvs[i+0];
+		glm::vec2 & uv1 = uvs[i+1];
+		glm::vec2 & uv2 = uvs[i+2];
 
-    //     // Edges of the triangle : postion delta
-    //     glm::vec3 deltaPos1 = v1-v0;
-    //     glm::vec3 deltaPos2 = v2-v0;
+		// Edges of the triangle : postion delta
+		glm::vec3 deltaPos1 = v1-v0;
+		glm::vec3 deltaPos2 = v2-v0;
 
-    //     // UV delta
-    //     glm::vec2 deltaUV1 = uv1-uv0;
-    //     glm::vec2 deltaUV2 = uv2-uv0;
+		// UV delta
+		glm::vec2 deltaUV1 = uv1-uv0;
+		glm::vec2 deltaUV2 = uv2-uv0;
 
 
-    //     float uvDeterminant = deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x;
-    //     float r = (uvDeterminant);
-    //     glm::vec3 tangent = (deltaPos1 * deltaUV2.y   - deltaPos2 * deltaUV1.y)*r;
-    //     glm::vec3 bitangent = (deltaPos2 * deltaUV1.x   - deltaPos1 * deltaUV2.x)*r;
-    //     std::cout << "Cylinder Tangent: " << tangent.x << " " << tangent.y << " " << tangent.z << std::endl;
-    //     // Set the same tangent for all three vertices of the triangle.
-    //     tangents.push_back(tangent);
-    //     tangents.push_back(tangent);
-    //     tangents.push_back(tangent);
+        float uvDeterminant = deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x;
+		float r = 1.0f/(uvDeterminant);
+		glm::vec3 tangent = (deltaPos1 * deltaUV2.y   - deltaPos2 * deltaUV1.y)*r;
+		glm::vec3 bitangent = (deltaPos2 * deltaUV1.x   - deltaPos1 * deltaUV2.x)*r;
+        #ifdef DEBUG
+        std::cout << "Tangent: " << tangent.x << " " << tangent.y << " " << tangent.z << std::endl;
+        #endif
+		// Set the same tangent for all three vertices of the triangle.
+		tangents.push_back(tangent);
+		tangents.push_back(tangent);
+		tangents.push_back(tangent);
 
-    //     bitangents.push_back(bitangent);
-    //     bitangents.push_back(bitangent);
-    //     bitangents.push_back(bitangent);
+		bitangents.push_back(bitangent);
+		bitangents.push_back(bitangent);
+		bitangents.push_back(bitangent);
 
-    // }
-    // glm::vec3 top = vertices[numSideVertices];
-    // for(int i =0; i<=numCapVertices/2; i++)
-    // {
-    //     glm::vec3 & v0 = vertices[numSideVertices + i];
-    //     glm::vec3 & v1 = vertices[numSideVertices + i + 1];
-    //     glm::vec3 & v2 = top;
 
-    //     // Shortcuts for UVs
-    //     glm::vec2 & uv0 = uvs[numSideVertices + i];
-    //     glm::vec2 & uv1 = uvs[numSideVertices + i + 1];
-    //     glm::vec2 & uv2 = uvs[numSideVertices];
 
-    //     // Edges of the triangle : postion delta
-    //     glm::vec3 deltaPos1 = v1-v0;
-    //     glm::vec3 deltaPos2 = v2-v0;
+	}
 
-    //     // UV delta
-    //     glm::vec2 deltaUV1 = uv1-uv0;
-    //     glm::vec2 deltaUV2 = uv2-uv0;
+	// See "Going Further"
+	// for (unsigned int i=0; i<vertices.size(); i+=1 )
+	// {
+	// 	glm::vec3 & n = normals[i];
+	// 	glm::vec3 & t = tangents[i];
+	// 	glm::vec3 & b = bitangents[i];
+		
+	// 	// Gram-Schmidt orthogonalize
+	// 	t = glm::normalize(t - n * glm::dot(n, t));
+		
+	// 	// Calculate handedness
+	// 	if (glm::dot(glm::cross(n, t), b) < 0.0f){
+	// 		t = t * -1.0f;
+	// 	}
 
-    //     float uvDeterminant = deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x;
-    //     float r = (uvDeterminant);
-    //     glm::vec3 tangent = (deltaPos1 * deltaUV2.y   - deltaPos2 * deltaUV1.y)*r;
-    //     glm::vec3 bitangent = (deltaPos2 * deltaUV1.x   - deltaPos1 * deltaUV2.x)*r;
-
-    //     tangents.push_back(tangent);
-    //     tangents.push_back(tangent);
-    //     tangents.push_back(tangent);
-
-    //     bitangents.push_back(bitangent);
-    //     bitangents.push_back(bitangent);
-    //     bitangents.push_back(bitangent);
-    // }
-    // glm::vec3 bottom = vertices[numSideVertices + numCapVertices/2];
-    // for(int i =0; i<=numCapVertices/2; i++)
-    // {
-    //     glm::vec3 & v0 = vertices[numSideVertices + numCapVertices + i];
-    //     glm::vec3 & v1 = vertices[numSideVertices + numCapVertices + i + 1];
-    //     glm::vec3 & v2 = bottom;
-
-    //     // Shortcuts for UVs
-    //     glm::vec2 & uv0 = uvs[numSideVertices + numCapVertices + i];
-    //     glm::vec2 & uv1 = uvs[numSideVertices + numCapVertices + i + 1];
-    //     glm::vec2 & uv2 = uvs[numSideVertices + numCapVertices];
-
-    //     // Edges of the triangle : postion delta
-    //     glm::vec3 deltaPos1 = v1-v0;
-    //     glm::vec3 deltaPos2 = v2-v0;
-
-    //     // UV delta
-    //     glm::vec2 deltaUV1 = uv1-uv0;
-    //     glm::vec2 deltaUV2 = uv2-uv0;
-
-    //     float uvDeterminant = deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x;
-    //     float r = (uvDeterminant);
-    //     glm::vec3 tangent = (deltaPos1 * deltaUV2.y   - deltaPos2 * deltaUV1.y)*r;
-    //     glm::vec3 bitangent = (deltaPos2 * deltaUV1.x   - deltaPos1 * deltaUV2.x)*r;
-
-    //     tangents.push_back(tangent);
-    //     tangents.push_back(tangent);
-    //     tangents.push_back(tangent);
-
-    //     bitangents.push_back(bitangent);
-    //     bitangents.push_back(bitangent);
-    //     bitangents.push_back(bitangent);
-    // }
+	// }
 }

@@ -8,6 +8,7 @@
 #include <vector>
 #include "Shader.h"
 // #include "Mesh.h"
+#include "Particles.h"
 #include "shapes.h"
 #include "objects/Cylinder.h"
 #include "objects/Sphere.h"
@@ -110,7 +111,7 @@ static void Projection()
 
 
 Shader *shader = nullptr;
-
+Shader *particleShader = nullptr;
 int floor_div = 1;
 bool texture = true;
 Texture *grass = nullptr;
@@ -154,6 +155,8 @@ Cylinder* cylinderMesh = nullptr;
 Sphere* sphereMesh = nullptr;
 Skybox* skybox = nullptr;
 float lightPower = 1.0;
+
+
 int main(int argc, char *argv[])
 {
     // glfw: initialize and configure
@@ -257,19 +260,15 @@ int main(int argc, char *argv[])
     TextureGroup *body_texture = new TextureGroup(std::vector<std::string>{"./textures/fabric/color.jpg", "./textures/fabric/normal.png"});
     TextureGroup* torch_texture_group = new TextureGroup(std::vector<std::string>{"./textures/wood/color.jpg", "./textures/wood/normal.png"});
 
-    // houseMesh = house(glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), brick_textures, 2, roof_textures, shader, lightPositions);
-    std::vector<glm::vec3> lightPositionsTemp;
+    particleShader = new Shader("./shaders/particle.vert", "./shaders/particle.frag");
     int index = 0;
     for (int i = -10; i < 10; i += 4)
     {
-        // house color based on i
-        // houses[index++] = house(glm::vec3(-6, 0.0, i + 1), glm::vec3(0,0,0), brick_textures, 1.0f, roof_textures, fire_texture, shader, lightPositions);
-        houses[index++] = new House(glm::vec3(-6, 0.0, i + 1), glm::vec3(1,1,1), glm::vec3(0, 0, 0), brick_texture_group, roof_texture_group, torch_texture_group, fire_texture_group, shader);
-        lightPositionsTemp.push_back(glm::vec3(-6, 0.0, i + 1));
-        // lightPositions.push_back(glm::vec3(-6, 0.0, i + 1));
-        houses[index++] = new House(glm::vec3(6, 0.0, i + 1), glm::vec3(1,1,1), glm::vec3(0, 180, 0), brick_texture_group, roof_texture_group, torch_texture_group, fire_texture_group, shader);
-        lightPositionsTemp.push_back(glm::vec3(6, 0.0, i + 1));
+
+        houses[index++] = new House(glm::vec3(-6, 0.0, i + 1), glm::vec3(1,1,1), glm::vec3(0, 0, 0), brick_texture_group, roof_texture_group, torch_texture_group, fire_texture_group, shader, particleShader, &camera);
+        houses[index++] = new House(glm::vec3(6, 0.0, i + 1), glm::vec3(1,1,1), glm::vec3(0, 180, 0), brick_texture_group, roof_texture_group, torch_texture_group, fire_texture_group, shader, particleShader, &camera);
     }
+
     army_changed = false;
     army.soliders.clear();
 
@@ -289,7 +288,6 @@ int main(int argc, char *argv[])
             }
         }
     }
-
 
 
     // lightPositions = lightPositionsTemp;
@@ -334,9 +332,10 @@ int main(int argc, char *argv[])
     unsigned int fpsCounter = 0;
     float deltaTime = 0.0f;
     resize(w_width, w_height); // initialize the viewport
-    camera.SetPosition(glm::vec3(0, 0, 0));
-    camera.LookAt(glm::vec3(0,-1,0));
-    camera.SetAngle(-90, 0);
+    camera.SetPosition(glm::vec3(5, 0, 5));
+    camera.LookAt(glm::vec3(0,0,0));
+    camera.Look();
+    camera.SetAngle(45+905 , 0);
     while (!quit)
     {
 
@@ -365,7 +364,7 @@ int main(int argc, char *argv[])
         // delta time in seconds
         // float secs = deltaTime / 1000.0f;
         //  camera.SetSpeed(camera.GetSpeed() * secs);
-        draw_screen(deltaTime);
+        draw_screen(deltaTime/1000);
         // get error
         gl_error();
         fpsCounter++;
@@ -394,8 +393,8 @@ int main(int argc, char *argv[])
 float time_day = 0;
 float time_speed = 0.1;
 float accumulated_time = 0;
-bool flashLightEnabled = false;
-float flickerAlpha = 0.1;
+bool flashLightEnabled = true;
+float flickerAlpha = 0.01;
 float lastFlicker = 0;
 float getFlicker() {
     return (rand() % 100 / 50.0) * flickerAlpha + (1 - flickerAlpha)*lastFlicker;
@@ -442,8 +441,10 @@ static void draw_screen(float deltaTime)
         }
     }
 
+
+
     for(int i = 0; i<numLights; i++){
-        std::string lightName = "lights[" + std::to_string(i+1) + "]";
+        std::string lightName = "lights[" + std::to_string(i) + "]";
         shader->setVec3(lightName + ".pos", lightPositions[i]);
         // shader->setFloat(lightName + ".power", 5.0);
         // shader->setVec4(lightName + ".color", glm::vec4(1, 1, 1, 1));
@@ -465,23 +466,19 @@ static void draw_screen(float deltaTime)
 
     plane->draw();
 
-    for(auto house : houses)
-    {
-        house->draw();
-    }
-
     for(auto tree : trees)
     {
         tree->draw();
     }
 
+
     for(auto solider : army.soliders)
     {
         if(!stop_army)
         solider->update(glm::vec3(0,0,march), glm::vec3(0, 0, 0), army.arm_angle, army.leg_angle);
-        // solider->draw();
+        solider->draw();
     }
-    int angleChange = 5;
+    int angleChange = 1;
     arm_angle_backwards = army.arm_angle > 160 ? true : army.arm_angle < 40 ? false
                                                                             : arm_angle_backwards;
     leg_angle_backwards = army.leg_angle > 270 ? true : army.leg_angle < 90 ? false
@@ -512,6 +509,11 @@ static void draw_screen(float deltaTime)
         }
 
     }
+    for(auto house : houses)
+    {
+        house->draw(deltaTime);
+    }
+
 
     skybox->getShader()->use();
     skybox->getShader()->setMat4("projection", projection);
@@ -519,7 +521,7 @@ static void draw_screen(float deltaTime)
     skybox->draw();
 
     // cylinderMesh->draw();
-    sphereMesh->draw();
+    // sphereMesh->draw();
     glUseProgram(0);
     glLoadIdentity();
     camera.Look();
